@@ -84,7 +84,7 @@ html[lang="en"] .lang [data-l="en"], html[lang="pt-BR"] .lang [data-l="pt"] { co
 .soma {
   position: fixed; left: 50%; top: 50%; z-index: 10;
   width: var(--D); height: var(--DH);
-  transform: translate(-50%, -50%) scale(.94);
+  transform: translate(calc(-50% + var(--px, 0px)), calc(-50% + var(--py, 0px))) scale(.94);
   border-radius: 50%;
   opacity: 0; pointer-events: none;
   transition: opacity .35s var(--ease), transform .45s var(--ease);
@@ -97,9 +97,9 @@ body.mode-focus .soma {
   transform: translate(calc(-50% + var(--px, 0px)), calc(-50% + var(--py, 0px))) perspective(1600px) rotateX(var(--rx, 0rad)) rotateY(var(--ry, 0rad));
 }
 .soma { transform-origin: 50% 50% calc(var(--orbR, 300px) * -1); backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: grab; }
+.soma-scroll { cursor: auto; }
 .soma a, .soma img { -webkit-user-drag: none; }
-body.mode-focus .soma.spun, body.rotating .soma, body.panning .soma { transition: opacity .3s var(--ease); }
-body.rotating, body.rotating * { cursor: grabbing !important; user-select: none; }
+body.mode-focus .soma.spun, body.panning .soma, body.mode-fly .soma { transition: opacity .3s var(--ease); }
 body.mode-focus #sky { cursor: grab; }
 body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 body.panning .soma { opacity: .45; }

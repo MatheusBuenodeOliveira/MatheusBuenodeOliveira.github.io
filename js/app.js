@@ -144,7 +144,7 @@
     if (mo === "overview") { updateReturn(); placeAtlas(); }
   }
 
-  function go(id, push = true) {
+  function go(id, push = true, glide = null) {
     if (!N[id]) return;
     if (mode === "overview" || mode === "intro") return dive(id, push);
     if (mode !== "focus" || id === current) return;
@@ -156,12 +156,20 @@
       path = e.a === from ? p : [p[6], p[7], p[4], p[5], p[2], p[3], p[0], p[1]];
     } else path = curve([from.wx, from.wy], [to.wx, to.wy], 0);
     path[0] = cam.x; path[1] = cam.y; // start from wherever a drag left the camera
-    const dist = Math.hypot(to.wx - from.wx, to.wy - from.wy);
-    const dip = Math.min(0.72, 0.3 + dist / (D * 9));
+    let dist = Math.hypot(to.wx - from.wx, to.wy - from.wy);
+    let dip = Math.min(0.72, 0.3 + dist / (D * 9)), dur = Math.min(1700, 850 + dist * 0.12), easing = ease;
+    if (glide) {
+      // released from a drag: keep the momentum and decelerate into the target
+      dist = Math.hypot(to.wx - cam.x, to.wy - cam.y);
+      const v = Math.hypot(glide.vx, glide.vy) || 1, carry = Math.min(dist * 0.35, v * 0.12);
+      path = [cam.x, cam.y, cam.x - (glide.vx / v) * carry, cam.y - (glide.vy / v) * carry, to.wx + (cam.x - to.wx) * 0.15, to.wy + (cam.y - to.wy) * 0.15, to.wx, to.wy];
+      dip = Math.min(0.25, dist / (D * 14)); dur = Math.min(1100, 520 + dist * 0.08);
+      easing = (t) => 1 - Math.pow(1 - t, 3);
+    }
     setMode("fly"); clearSynapses(); trailPts.length = 0;
     flyColor = to.color;
-    animate(Math.min(1700, 850 + dist * 0.12), (k) => {
-      const t = ease(k);
+    animate(dur, (k) => {
+      const t = easing(k);
       [cam.x, cam.y] = bez(path, t);
       cam.z = 1 - dip * Math.sin(Math.PI * t);
       trailPts.push([cam.x, cam.y]); if (trailPts.length > 18) trailPts.shift();
@@ -681,7 +689,7 @@
       drawStrand(curve(a, b, e.bend), e.offs, e.kind === "link" ? e.b.color : e.a.color, alpha, spread * (e.kind === "link" ? 0.7 : 1));
     }
 
-    if (mode === "focus" && !(drag && drag.kind === "pan" && drag.live)) conns.forEach((c) => drawStrand(c.p, c.offs, c.color, c.kind === "link" ? 0.75 : 1, orbR * 0.07));
+    if (mode === "focus" && !(drag && drag.live)) conns.forEach((c) => drawStrand(c.p, c.offs, c.color, c.kind === "link" ? 0.75 : 1, orbR * 0.07));
 
     pulses = pulses.filter((q) => {
       q.t += q.v * dt;
@@ -736,7 +744,7 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     stepTween(now);
-    spinPhysics(dt, now);
+    spinPhysics(dt);
     if (!reduceMotion) {
       clock += dt;
       const every = mode === "focus" ? 0.28 : hoverId ? 0.06 : 0.12;
@@ -746,35 +754,46 @@
     requestAnimationFrame(frame);
   }
 
-  // ───────── Gestures: spin the neuron, drag the space to travel ─────────
-  nodes.forEach((n) => { n.uy = 0; n.ux = 0; n.vy = 0; n.vx = 0; n.touched = 0; });
+  // ───────── Gestures: drag anywhere to travel; the neuron tilts toward you ─────────
+  nodes.forEach((n) => { n.uy = 0; n.ux = 0; });
   const somaEl = $("#soma");
   let drag = null, lastRx = null, lastRy = null, lastPx = 0, lastPy = 0, swallowClick = false;
-  const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  let tiltX = 0, tiltY = 0; // target tilt in radians, from the mouse or the phone's orientation
+  const MAX_TILT = 0.22;
 
-  function spinPhysics(dt, now) {
+  addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    tiltY = Math.max(-1, Math.min(1, (e.clientX - vw / 2) / (vw / 2))) * MAX_TILT;
+    tiltX = -Math.max(-1, Math.min(1, (e.clientY - vh / 2) / (vh / 2))) * MAX_TILT * 0.8;
+  }, { passive: true });
+  document.addEventListener("mouseleave", () => (tiltX = tiltY = 0));
+  // Android and others expose orientation without a permission prompt; iOS simply skips this
+  addEventListener("deviceorientation", (e) => {
+    if (e.gamma == null || e.beta == null) return;
+    tiltY = Math.max(-1, Math.min(1, e.gamma / 30)) * MAX_TILT;
+    tiltX = -Math.max(-1, Math.min(1, (e.beta - 45) / 30)) * MAX_TILT * 0.8;
+  }, { passive: true });
+
+  function spinPhysics(dt) {
+    const k = 1 - Math.exp(-dt * (reduceMotion ? 50 : 4));
+    const panning = drag && drag.live;
     for (const n of nodes) {
-      if (drag && drag.kind === "rot" && n.id === current) continue;
-      if (n.vy || n.vx) {
-        n.uy += n.vy * dt; n.ux += n.vx * dt;
-        const f = Math.exp(-dt * 3.5); n.vy *= f; n.vx *= f;
-        if (Math.abs(n.vy) + Math.abs(n.vx) < 0.01) n.vy = n.vx = 0;
-      }
-      if ((n.uy || n.ux) && now - n.touched > 1400) { // settle back so the text faces the reader
-        const f = Math.exp(-dt * 2.2);
-        n.uy = wrapPi(n.uy) * f; n.ux = wrapPi(n.ux) * f;
-        if (Math.abs(n.uy) + Math.abs(n.ux) < 0.002) n.uy = n.ux = 0;
-      }
+      const here = n.id === current && mode === "focus" && !panning;
+      const ty = here ? tiltY : 0, tx = here ? tiltX : 0;
+      n.uy += (ty - n.uy) * k; n.ux += (tx - n.ux) * k;
+      if (Math.abs(n.uy) < 1e-4 && !ty) n.uy = 0;
+      if (Math.abs(n.ux) < 1e-4 && !tx) n.ux = 0;
     }
     const n = current && N[current];
-    const ry = n ? n.uy : 0, rx = n ? -n.ux : 0;
-    const px = n && mode === "focus" ? Math.round((n.wx - cam.x) * cam.z) : 0, py = n && mode === "focus" ? Math.round((n.wy - cam.y) * cam.z) : 0;
-    if (px !== lastPx || py !== lastPy) { somaEl.style.setProperty("--px", px + "px"); somaEl.style.setProperty("--py", py + "px"); lastPx = px; lastPy = py; }
+    const ry = n ? Math.round(n.uy * 1000) / 1000 : 0, rx = n ? Math.round(-n.ux * 1000) / 1000 : 0;
     if (ry !== lastRy || rx !== lastRx) {
       somaEl.style.setProperty("--ry", ry + "rad"); somaEl.style.setProperty("--rx", rx + "rad");
       somaEl.classList.toggle("spun", !!(ry || rx));
       lastRy = ry; lastRx = rx;
     }
+    const follow = n && (mode === "focus" || mode === "fly");
+    const px = follow ? Math.round((n.wx - cam.x) * cam.z) : 0, py = follow ? Math.round((n.wy - cam.y) * cam.z) : 0;
+    if (px !== lastPx || py !== lastPy) { somaEl.style.setProperty("--px", px + "px"); somaEl.style.setProperty("--py", py + "px"); lastPx = px; lastPy = py; }
   }
 
   // which neighbour lies in the direction of travel?
@@ -793,67 +812,53 @@
   addEventListener("pointerdown", (e) => {
     if (mode !== "focus" || e.button > 0 || drag) return;
     if (e.target.closest(".syn, button, a, input, .hud-top, .hud-bottom, .overview-bar")) return;
-    const onSoma = !!e.target.closest("#soma");
-    drag = { id: e.pointerId, type: e.pointerType, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), kind: onSoma ? "rot" : "pan", live: false, vx: 0, vy: 0 };
-    if (onSoma && e.pointerType === "mouse") e.preventDefault(); // no text selection while spinning
+    drag = { id: e.pointerId, type: e.pointerType, onSoma: !!e.target.closest("#soma"), x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), live: false, vx: 0, vy: 0 };
+    if (e.pointerType === "mouse") e.preventDefault(); // no text selection while dragging
   });
 
   addEventListener("pointermove", (e) => {
     if (!drag || e.pointerId !== drag.id) return;
-    const now = performance.now(), dx = e.clientX - drag.x, dy = e.clientY - drag.y, dt = Math.max(1, now - drag.t) / 1000;
+    const now = performance.now(), dt = Math.max(1, now - drag.t) / 1000;
+    const ox = e.clientX - drag.x0, oy = e.clientY - drag.y0;
     if (!drag.live) {
-      const mx = e.clientX - drag.x0, my = e.clientY - drag.y0;
-      if (Math.hypot(mx, my) < 6) return;
-      // on touch, a vertical drag on the neuron scrolls its text instead
-      if (drag.kind === "rot" && drag.type !== "mouse" && Math.abs(my) > Math.abs(mx)) { drag = null; return; }
-      drag.live = true;
-      body.classList.add(drag.kind === "rot" ? "rotating" : "panning");
+      if (Math.hypot(ox, oy) < 8) return;
+      // on touch, a vertical drag over the neuron scrolls its text instead
+      if (drag.onSoma && drag.type !== "mouse" && Math.abs(oy) > Math.abs(ox)) { drag = null; return; }
+      drag.live = true; body.classList.add("panning");
     }
-    if (drag.kind === "rot") {
-      const n = N[current], k = 1 / orbR;
-      n.uy += dx * k; n.ux -= dy * k; n.touched = now;
-      n.vy = (dx * k) / dt; n.vx = (-dy * k) / dt;
-    } else {
-      const ox = e.clientX - drag.x0, oy = e.clientY - drag.y0;
-      cam.x = N[current].wx - ox * 0.9; cam.y = N[current].wy - oy * 0.9;
-      const s = Math.hypot(ox, oy) > 40 ? aimAt(-ox, -oy) : null;
-      synList.forEach((x) => x.el.classList.toggle("aim", x === s));
-      drag.aim = s;
-      drag.vx = dx / dt; drag.vy = dy / dt;
-    }
+    cam.x = N[current].wx - ox * 0.9; cam.y = N[current].wy - oy * 0.9;
+    const s = Math.hypot(ox, oy) > 40 ? aimAt(-ox, -oy) : null;
+    synList.forEach((x) => x.el.classList.toggle("aim", x === s));
+    drag.aim = s;
+    drag.vx = (e.clientX - drag.x) / dt; drag.vy = (e.clientY - drag.y) / dt;
     drag.x = e.clientX; drag.y = e.clientY; drag.t = now;
   });
 
   function endDrag(e) {
     if (!drag || (e && e.pointerId !== drag.id)) return;
     const d = drag; drag = null;
-    body.classList.remove("rotating", "panning");
+    body.classList.remove("panning");
     if (!d.live) return;
     swallowClick = true; setTimeout(() => (swallowClick = false), 0);
-    if (d.kind === "rot") {
-      const n = N[current]; n.touched = performance.now();
-      if (performance.now() - d.t > 80) n.vy = n.vx = 0; // released while holding still
-      return;
-    }
     synList.forEach((x) => x.el.classList.remove("aim"));
-    const ox = d.x - d.x0, oy = d.y - d.y0, flick = Math.hypot(d.vx, d.vy) > 700;
+    const ox = d.x - d.x0, oy = d.y - d.y0, dist = Math.hypot(ox, oy);
+    const flick = performance.now() - d.t < 90 && Math.hypot(d.vx, d.vy) > 700;
     const target = d.aim || (flick ? aimAt(-d.vx, -d.vy) : null);
-    const dist = Math.hypot(ox, oy);
-    if (target && (dist > Math.min(vw, vh) * 0.18 || (flick && dist > 90))) { go(target.id); return; }
+    if (target && (dist > Math.min(vw, vh) * 0.18 || (flick && dist > 90))) { go(target.id, true, { vx: d.vx, vy: d.vy }); return; }
     const x0 = cam.x, y0 = cam.y, n = N[current]; // not far enough: spring back
     animate(320, (k) => { const t = ease(k); cam.x = lerp(x0, n.wx, t); cam.y = lerp(y0, n.wy, t); });
   }
   addEventListener("pointerup", endDrag);
   addEventListener("pointercancel", (e) => {
     if (!drag || e.pointerId !== drag.id) return;
-    if (drag.kind === "pan" && drag.live) return endDrag(e);
-    drag = null; body.classList.remove("rotating", "panning");
+    if (drag.live) return endDrag(e);
+    drag = null;
   });
   addEventListener("click", (e) => { if (swallowClick) { e.stopPropagation(); e.preventDefault(); } }, true);
 
   // a one-time hint for touch screens, where the key line is hidden
   function maybeHint() {
-    try { if (!mobile || localStorage.getItem("hinted")) return; localStorage.setItem("hinted", "1"); } catch { return; }
+    try { if (!mobile || localStorage.getItem("hinted2")) return; localStorage.setItem("hinted2", "1"); } catch { return; }
     const t = document.createElement("div");
     t.className = "toast"; t.textContent = ui("dragHint");
     body.appendChild(t);
