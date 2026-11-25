@@ -15,7 +15,7 @@ window.SITE = {
       blurb: { en: "Degrees, certificates and awards", pt: "Cursos, certificados e prêmios" },
       order: ["ifsul", "fce", "awards", "pucrs", "ada", "iit"] },
     { id: "skills", label: { en: "Skills", pt: "Habilidades" }, color: "#3fd3f2",
-      blurb: { en: "What the training produced", pt: "O que o treino produziu" },
+      blurb: { en: "What the training produced", pt: "O que o aprendizado gerou" },
       order: ["code", "ml", "data", "cloud", "integ", "agentic"] },
   ],
 
@@ -26,9 +26,9 @@ window.SITE = {
     ["ifsul", "city", 0.8, { en: "Technical degree → first IT job", pt: "Curso técnico → 1º emprego em TI" }],
     ["ifsul", "code", 0.9, { en: "Where I learned to code", pt: "Onde aprendi a programar" }],
     ["pucrs", "dellint", 1, { en: "Selected for Dell IT Academy", pt: "Selecionado para a Dell IT Academy" }],
-    ["awards", "dellint", 0.5, { en: "Hackathon mindset, shipped at Dell", pt: "Espírito de hackathon, levado à Dell" }],
+    ["awards", "dellint", 0.5, { en: "Hackathon mindset, shipped at Dell", pt: "A energia de hackathon levada para a Dell" }],
     ["dellint", "code", 0.8, { en: "Python, .NET and Vue.js in practice", pt: "Python, .NET e Vue.js na prática" }],
-    ["dell1", "ml", 1, { en: "ML pipelines taken to production", pt: "Pipelines de ML levados à produção" }],
+    ["dell1", "ml", 1, { en: "ML pipelines taken to production", pt: "Pipelines de ML colocados em produção" }],
     ["dell1", "cloud", 0.8, { en: "Docker and Kubernetes at scale", pt: "Docker e Kubernetes em escala" }],
     ["ada", "data", 0.9, { en: "Data engineering track", pt: "Trilha de engenharia de dados" }],
     ["dell2", "agentic", 1, { en: "Agents and MCP servers", pt: "Agentes e servidores MCP" }],
@@ -49,14 +49,14 @@ window.SITE = {
       org: { en: "Senior AI Engineer · Rio Grande do Sul, Brazil", pt: "Engenheiro Sênior de IA · Rio Grande do Sul, Brasil" },
       body: {
         en: "I build LLM-powered systems, agentic workflows and cloud data platforms, and I like owning them end to end: from data ingestion and model orchestration to deployment and measurable business results.",
-        pt: "Construo sistemas com LLMs, fluxos agênticos e plataformas de dados em nuvem, e gosto de ser dono deles de ponta a ponta: da ingestão de dados e orquestração de modelos ao deploy e a resultados de negócio mensuráveis.",
+        pt: "Desenvolvo sistemas com LLMs, agentes de IA e plataformas de dados em nuvem, e gosto de acompanhar cada projeto do início ao fim: da ingestão dos dados e da orquestração dos modelos até o deploy e os resultados que ele gera para o negócio.",
       },
       facts: [
         { k: { en: "Now", pt: "Hoje" }, v: { en: "TELUS Digital", pt: "TELUS Digital" } },
         { k: { en: "Before", pt: "Antes" }, v: { en: "Dell Technologies", pt: "Dell Technologies" } },
         { k: { en: "Speaks", pt: "Idiomas" }, v: { en: "Portuguese · English", pt: "Português · Inglês" } },
       ],
-      hint: { en: "This is a neural network of my career. Pick a path to follow its signal.", pt: "Esta é uma rede neural da minha carreira. Escolha um caminho para seguir o sinal." },
+      hint: { en: "This is a neural network of my career. Pick a path to follow its signal.", pt: "Minha carreira, desenhada como uma rede neural. Escolha um caminho e siga o sinal." },
     },
 
     // ───────────── CAREER ─────────────
@@ -67,11 +67,11 @@ window.SITE = {
       when: { en: "Sep 2022 – Jan 2023", pt: "set 2022 – jan 2023" },
       body: {
         en: "My first job: keeping the systems and the people of a public administration running.",
-        pt: "Meu primeiro emprego: manter funcionando os sistemas e as pessoas de uma administração pública.",
+        pt: "Meu primeiro emprego: garantir que os sistemas da prefeitura funcionassem e que as pessoas conseguissem trabalhar com eles.",
       },
       bullets: {
         en: ["End-user IT support and troubleshooting", "Maintenance of internal systems"],
-        pt: ["Suporte de TI e troubleshooting para usuários", "Manutenção de sistemas internos"],
+        pt: ["Suporte técnico e resolução de problemas para os usuários", "Manutenção de sistemas internos"],
       },
     },
     dellint: {
@@ -82,11 +82,11 @@ window.SITE = {
       when: { en: "May 2023 – Aug 2024", pt: "mai 2023 – ago 2024" },
       body: {
         en: "Selected for the Dell IT Academy, a competitive training and placement program run with PUCRS.",
-        pt: "Selecionado para a Dell IT Academy, um programa concorrido de formação e contratação em parceria com a PUCRS.",
+        pt: "Fui selecionado para a Dell IT Academy, um programa concorrido de formação e contratação feito em parceria com a PUCRS.",
       },
       bullets: {
         en: ["Built AI-driven automations that improved operational efficiency", "Hands-on with Python, AI/ML, ASP.NET Core, Vue.js, SQL/NoSQL, Docker and Kubernetes"],
-        pt: ["Construí automações com IA que aumentaram a eficiência operacional", "Prática com Python, IA/ML, ASP.NET Core, Vue.js, SQL/NoSQL, Docker e Kubernetes"],
+        pt: ["Desenvolvi automações com IA que aumentaram a eficiência operacional", "Experiência prática com Python, IA/ML, ASP.NET Core, Vue.js, SQL/NoSQL, Docker e Kubernetes"],
       },
       metrics: [{ v: "US$12M", l: { en: "saved per year", pt: "economia por ano" } }],
     },
@@ -97,7 +97,7 @@ window.SITE = {
       when: { en: "Aug 2024 – Feb 2026", pt: "ago 2024 – fev 2026" },
       body: {
         en: "AI solutions and automation for two of Dell's largest business groups, with ML pipelines taken all the way to production.",
-        pt: "Soluções de IA e automação para dois dos maiores grupos de negócio da Dell, com pipelines de ML levados até a produção.",
+        pt: "Soluções de IA e automação para duas das maiores áreas de negócio da Dell, com pipelines de ML colocados em produção.",
       },
       bullets: {
         en: [
@@ -107,15 +107,15 @@ window.SITE = {
           "Proposed a fiscal automation projected to cut R$20M in annual expenses",
         ],
         pt: [
-          "Infrastructure Solutions Group: redução de US$19,4M/ano em custos e 87 mil horas de trabalho poupadas por ano",
-          "Client Solutions Group: US$12M/ano de economia e 133 mil ordens de serviço a menos",
-          "APIs Python com mais de 20 mil requisições/dia em Docker e Kubernetes",
-          "Propus uma automação fiscal com projeção de cortar R$20M em despesas anuais",
+          "Infrastructure Solutions Group: US$19,4M a menos em custos por ano e 87 mil horas de trabalho economizadas por ano",
+          "Client Solutions Group: economia de US$12M por ano e 133 mil ordens de serviço a menos",
+          "APIs em Python que atendem mais de 20 mil requisições por dia, com Docker e Kubernetes",
+          "Propus uma automação fiscal com potencial de reduzir R$20M em despesas por ano",
         ],
       },
       metrics: [
         { v: "US$19.4M", l: { en: "saved / year", pt: "economia / ano" } },
-        { v: "87K", l: { en: "hours saved / year", pt: "horas poupadas / ano" } },
+        { v: "87K", l: { en: "hours saved / year", pt: "horas economizadas / ano" } },
         { v: "20K+", l: { en: "requests / day", pt: "requisições / dia" } },
       ],
     },
@@ -126,7 +126,7 @@ window.SITE = {
       when: { en: "Feb 2026 – May 2026", pt: "fev 2026 – mai 2026" },
       body: {
         en: "Agentic AI systems and LLM automation, connecting agents to enterprise systems through MCP.",
-        pt: "Sistemas de IA Agêntica e automação com LLMs, conectando agentes a sistemas corporativos via MCP.",
+        pt: "Sistemas de IA agêntica e automações com LLMs, conectando agentes aos sistemas da empresa via MCP.",
       },
       bullets: {
         en: [
@@ -135,12 +135,12 @@ window.SITE = {
           "Public APIs, webhooks and subscription lifecycle behind secure gateways",
         ],
         pt: [
-          "Construí ferramentas e servidores MCP em Python para fluxos sem intervenção manual",
+          "Desenvolvi ferramentas e servidores MCP em Python para fluxos totalmente automatizados",
           "Integrei APIs do Salesforce, Microsoft Graph e plataformas internas",
-          "APIs públicas, webhooks e ciclo de vida de assinaturas atrás de gateways seguros",
+          "APIs públicas, webhooks e o ciclo de vida de assinaturas, protegidos por gateways seguros",
         ],
       },
-      metrics: [{ v: "30–40%", l: { en: "of project volume to automate", pt: "do volume de projetos a automatizar" } }],
+      metrics: [{ v: "30–40%", l: { en: "of project volume to automate", pt: "do volume de projetos com automação prevista" } }],
     },
     telus: {
       short: { en: "TELUS", pt: "TELUS" },
@@ -150,7 +150,7 @@ window.SITE = {
       when: { en: "May 2026 – now", pt: "mai 2026 – hoje" },
       body: {
         en: "LLM systems for a lead generation platform that finds, enriches and qualifies opportunities for sales teams.",
-        pt: "Sistemas com LLMs para uma plataforma de geração de leads que encontra, enriquece e qualifica oportunidades para times de vendas.",
+        pt: "Sistemas com LLMs para uma plataforma de geração de leads, que encontra, enriquece e qualifica oportunidades para os times de vendas.",
       },
       bullets: {
         en: [
@@ -160,10 +160,10 @@ window.SITE = {
           "Working with sales stakeholders to turn revenue targets into AI features",
         ],
         pt: [
-          "Pipelines no BigQuery que consolidam e enriquecem sinais de leads em escala",
+          "Pipelines no BigQuery que reúnem e enriquecem, em escala, os sinais sobre cada lead",
           "Infraestrutura como código com Pulumi no GCP; Docker e CI/CD",
-          "Engenharia de prompts, validação de saídas e avaliação para LLMs seguros em produção",
-          "Trabalho com vendas para transformar metas de receita em features de IA",
+          "Engenharia de prompts, validação de respostas e avaliações para manter os LLMs confiáveis em produção",
+          "Trabalho junto ao time de vendas para transformar metas de receita em funcionalidades de IA",
         ],
       },
       metrics: [{ v: "US$350K+", l: { en: "revenue initiative", pt: "iniciativa de receita" } }],
@@ -177,7 +177,7 @@ window.SITE = {
       when: { en: "Mar 2019 – Feb 2023", pt: "mar 2019 – fev 2023" },
       body: {
         en: "Where the first weights were initialized: programming fundamentals, systems and the habit of building things.",
-        pt: "Onde os primeiros pesos foram inicializados: fundamentos de programação, sistemas e o hábito de construir coisas.",
+        pt: "Onde os primeiros pesos foram inicializados: fundamentos de programação, sistemas e o gosto por construir coisas.",
       },
     },
     fce: {
@@ -187,7 +187,7 @@ window.SITE = {
       when: { en: "Jan 2022", pt: "jan 2022" },
       body: {
         en: "International English certification. Today I work in English at full professional level.",
-        pt: "Certificação internacional de inglês. Hoje trabalho em inglês em nível profissional pleno.",
+        pt: "Certificação internacional de inglês. Hoje uso o inglês no dia a dia de trabalho, com fluência profissional.",
       },
     },
     awards: {
@@ -208,7 +208,7 @@ window.SITE = {
       when: { en: "Feb 2023 – Jul 2027 (expected)", pt: "fev 2023 – jul 2027 (previsto)" },
       body: {
         en: "Still training. The degree was also my bridge to industry, through the Dell IT Academy partnership.",
-        pt: "Ainda em treinamento. A graduação também foi minha ponte para a indústria, pela parceria com a Dell IT Academy.",
+        pt: "Ainda em treinamento. A graduação também foi minha porta de entrada no mercado, graças à parceria com a Dell IT Academy.",
       },
     },
     ada: {
@@ -228,7 +228,7 @@ window.SITE = {
       when: { en: "Dec 2025", pt: "dez 2025" },
       body: {
         en: "Applied AI engineering program, completed while building AI systems at Dell.",
-        pt: "Programa de engenharia de IA aplicada, concluído enquanto eu construía sistemas de IA na Dell.",
+        pt: "Programa de engenharia de IA aplicada, concluído enquanto eu desenvolvia sistemas de IA na Dell.",
       },
     },
 
@@ -244,7 +244,7 @@ window.SITE = {
       title: { en: "Machine Learning & MLOps", pt: "Machine Learning & MLOps" },
       body: {
         en: "End-to-end ML pipelines, from data ingestion to production, with MLOps practices for reliability.",
-        pt: "Pipelines de ML de ponta a ponta, da ingestão à produção, com práticas de MLOps para confiabilidade.",
+        pt: "Pipelines de ML completos, da ingestão dos dados até a produção, com práticas de MLOps para garantir confiabilidade.",
       },
       tech: ["TensorFlow", "scikit-learn", "MLOps", "Applied AI"],
     },
@@ -253,7 +253,7 @@ window.SITE = {
       title: { en: "Data Engineering", pt: "Engenharia de Dados" },
       body: {
         en: "Pipelines that consolidate and enrich data at scale, and the APIs that serve it.",
-        pt: "Pipelines que consolidam e enriquecem dados em escala, e as APIs que os servem.",
+        pt: "Pipelines que reúnem e enriquecem dados em escala, e as APIs que os disponibilizam.",
       },
       tech: ["BigQuery", "Data pipelines", "SQL", "NoSQL", "REST APIs"],
     },
@@ -280,7 +280,7 @@ window.SITE = {
       title: { en: "Agentic AI & LLMs", pt: "IA Agêntica & LLMs" },
       body: {
         en: "My core specialty: LLM systems and agents that run in production, with tool use via MCP, output validation and evaluation.",
-        pt: "Minha especialidade: sistemas de LLM e agentes rodando em produção, com uso de ferramentas via MCP, validação de saídas e avaliação.",
+        pt: "Minha especialidade: sistemas com LLMs e agentes de IA rodando em produção, com uso de ferramentas via MCP, validação de respostas e avaliação contínua.",
       },
       tech: ["Agentic AI", "LLMs", "Prompt engineering", "MCP", "Evaluation"],
     },
@@ -317,6 +317,9 @@ window.SITE = {
     keys: { en: "← → move · N network", pt: "← → navegar · N rede" },
     now: { en: "now", pt: "atual" },
     switchLang: { en: "Mudar para português", pt: "Switch to English" },
-    core: { en: "Start & end", pt: "Início & fim" },
+    core: { en: "Start & end", pt: "Início e fim" },
+    inputLayer: { en: "Input layer", pt: "Camada de entrada" },
+    hiddenLayers: { en: "Hidden layers", pt: "Camadas ocultas" },
+    outputLayer: { en: "Output layer", pt: "Camada de saída" },
   },
 };

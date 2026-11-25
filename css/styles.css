@@ -43,8 +43,7 @@ button { font: inherit; color: inherit; }
 .hud-actions { display: flex; gap: 8px; }
 .chip {
   display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 13px;
-  border-radius: 999px; border: 1px solid var(--line); background: rgba(10, 18, 36, 0.7);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 999px; border: 1px solid var(--line); background: rgba(8, 16, 34, 0.86);
   font: 500 12px/1 var(--mono); cursor: pointer; transition: border-color .2s, background .2s, color .2s;
 }
 .chip:hover { border-color: rgba(150, 190, 255, .35); background: rgba(20, 34, 64, .8); }
@@ -76,8 +75,7 @@ html[lang="en"] .lang [data-l="en"], html[lang="pt-BR"] .lang [data-l="pt"] { co
 .keys { margin: 0 auto 8px 0; font-size: 11px; color: var(--muted); padding-left: 8px; }
 .minimap {
   width: 176px; height: 112px; padding: 0; border-radius: 12px; cursor: pointer; overflow: hidden;
-  border: 1px solid var(--line); background: rgba(8, 14, 30, .75);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line); background: rgba(6, 12, 28, .9);
 }
 .minimap:hover { border-color: rgba(150, 190, 255, .4); }
 .minimap canvas { width: 100%; height: 100%; display: block; }
@@ -160,24 +158,56 @@ body.mode-focus .soma { opacity: 1; pointer-events: auto; transform: translate(-
 /* ───────── Synapses (ways out of the current neuron) ───────── */
 .synapses { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
 .syn {
+  --sa: color-mix(in srgb, var(--sc) 32%, transparent);
   position: absolute; pointer-events: auto; cursor: pointer;
-  display: grid; gap: 3px; max-width: 230px; padding: 10px 14px 11px;
-  text-align: left; border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--sc) 35%, transparent);
-  background: rgba(7, 13, 30, .88);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  opacity: 0; transition: opacity .35s var(--ease), border-color .2s, background .2s, transform .35s var(--ease);
+  display: flex; align-items: center; gap: 12px; max-width: 250px; padding: 9px 16px 9px 9px;
+  text-align: left; border-radius: 18px;
+  border: 1px solid var(--sa);
+  background:
+    radial-gradient(130% 160% at 0% 50%, color-mix(in srgb, var(--sc) 20%, transparent), transparent 58%),
+    linear-gradient(180deg, rgba(12, 28, 60, .9), rgba(4, 11, 26, .92));
+  box-shadow: inset 0 1px 0 rgba(200, 230, 255, .08), 0 10px 30px rgba(0, 0, 0, .35), 0 0 26px color-mix(in srgb, var(--sc) 14%, transparent);
+  opacity: 0; transition: opacity .35s var(--ease), border-color .25s, box-shadow .25s, transform .35s var(--ease);
+}
+.syn::before { /* thin light along the top edge */
+  content: ""; position: absolute; left: 18px; right: 18px; top: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--sc) 80%, white), transparent); opacity: .55;
 }
 body.mode-focus .syn { opacity: 1; }
-.syn:hover, .syn:focus-visible { border-color: var(--sc); background: rgba(16, 30, 64, .92); }
+.syn:hover, .syn:focus-visible {
+  border-color: color-mix(in srgb, var(--sc) 75%, transparent);
+  box-shadow: inset 0 1px 0 rgba(200, 230, 255, .12), 0 10px 30px rgba(0, 0, 0, .35), 0 0 40px color-mix(in srgb, var(--sc) 30%, transparent);
+}
 .syn.side-r { transform: translate(8px, -50%); }
-.syn.side-l { transform: translate(calc(-100% - 8px), -50%); text-align: right; }
+.syn.side-l { transform: translate(calc(-100% - 8px), -50%); flex-direction: row-reverse; text-align: right; padding: 9px 9px 9px 16px;
+  background:
+    radial-gradient(130% 160% at 100% 50%, color-mix(in srgb, var(--sc) 20%, transparent), transparent 58%),
+    linear-gradient(180deg, rgba(12, 28, 60, .9), rgba(4, 11, 26, .92)); }
 body.mode-focus .syn.side-r { transform: translate(0, -50%); }
 body.mode-focus .syn.side-l { transform: translate(-100%, -50%); }
-.syn .s-k { font: 500 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--sc); }
+
+/* the terminal: a tiny plexus neuron the strand plugs into */
+.s-node {
+  position: relative; flex: 0 0 38px; height: 38px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--sc) 30%, #04101f), #030a18 70%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sc) 55%, transparent), 0 0 18px color-mix(in srgb, var(--sc) 40%, transparent);
+  transition: transform .3s var(--ease);
+}
+.s-node::before {
+  content: ""; position: absolute; inset: 5px; background: var(--sc);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='white' stroke-width='1'><path d='M29 16 25.2 6.8 16 3 6.8 6.8 3 16 6.8 25.2 16 29 25.2 25.2Z M16 10 16 3 M16 10 25.2 6.8 M16 10 6.8 6.8 M16 10 10 15 M16 10 22 15 M10 15 6.8 6.8 M10 15 3 16 M10 15 13 22 M22 15 25.2 6.8 M22 15 29 16 M22 15 20 22 M13 22 6.8 25.2 M13 22 16 29 M13 22 20 22 M20 22 16 29 M20 22 25.2 25.2 M10 15 22 15'/><g fill='white' stroke='none'><circle cx='16' cy='10' r='1.6'/><circle cx='10' cy='15' r='1.6'/><circle cx='22' cy='15' r='1.6'/><circle cx='13' cy='22' r='1.6'/><circle cx='20' cy='22' r='1.6'/><circle cx='29' cy='16' r='1.3'/><circle cx='25.2' cy='6.8' r='1.3'/><circle cx='16' cy='3' r='1.3'/><circle cx='6.8' cy='6.8' r='1.3'/><circle cx='3' cy='16' r='1.3'/><circle cx='6.8' cy='25.2' r='1.3'/><circle cx='16' cy='29' r='1.3'/><circle cx='25.2' cy='25.2' r='1.3'/></g></svg>") center / contain no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='white' stroke-width='1'><path d='M29 16 25.2 6.8 16 3 6.8 6.8 3 16 6.8 25.2 16 29 25.2 25.2Z M16 10 16 3 M16 10 25.2 6.8 M16 10 6.8 6.8 M16 10 10 15 M16 10 22 15 M10 15 6.8 6.8 M10 15 3 16 M10 15 13 22 M22 15 25.2 6.8 M22 15 29 16 M22 15 20 22 M13 22 6.8 25.2 M13 22 16 29 M13 22 20 22 M20 22 16 29 M20 22 25.2 25.2 M10 15 22 15'/><g fill='white' stroke='none'><circle cx='16' cy='10' r='1.6'/><circle cx='10' cy='15' r='1.6'/><circle cx='22' cy='15' r='1.6'/><circle cx='13' cy='22' r='1.6'/><circle cx='20' cy='22' r='1.6'/><circle cx='29' cy='16' r='1.3'/><circle cx='25.2' cy='6.8' r='1.3'/><circle cx='16' cy='3' r='1.3'/><circle cx='6.8' cy='6.8' r='1.3'/><circle cx='3' cy='16' r='1.3'/><circle cx='6.8' cy='25.2' r='1.3'/><circle cx='16' cy='29' r='1.3'/><circle cx='25.2' cy='25.2' r='1.3'/></g></svg>") center / contain no-repeat;
+  opacity: .9; animation: spin 26s linear infinite;
+}
+.s-node::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #e8f6ff; box-shadow: 0 0 8px 2px var(--sc); }
+.syn:hover .s-node { transform: scale(1.08); }
+.syn.primary .s-node { box-shadow: 0 0 0 1px var(--sc), 0 0 22px color-mix(in srgb, var(--sc) 60%, transparent); }
+.syn.primary .s-node::after { animation: beat 2.2s ease-in-out infinite; }
+@keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.6); } }
+.s-txt { display: grid; gap: 3px; min-width: 0; }
+.syn .s-k { font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--sc); }
 .syn .s-t { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.25; }
 .syn .s-r { font-size: 12px; color: var(--muted); line-height: 1.35; }
-.syn.primary { border-color: color-mix(in srgb, var(--sc) 70%, transparent); background: color-mix(in srgb, var(--sc) 14%, rgba(7, 13, 30, .9)); }
+.syn.primary { border-color: color-mix(in srgb, var(--sc) 60%, transparent); }
 .syn.primary .s-t::after { content: " →"; color: var(--sc); }
 .syn.side-l.primary .s-t::after { content: ""; }
 .syn.side-l.primary .s-t::before { content: "← "; color: var(--sc); }
@@ -199,6 +229,13 @@ body.mode-overview .a-node { pointer-events: auto; opacity: 1; }
   font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
 }
 body.mode-overview .a-track { opacity: 1; }
+.a-layer, .a-bracket, .a-idx { position: absolute; pointer-events: none; opacity: 0; transition: opacity .4s; }
+body.mode-overview .a-layer, body.mode-overview .a-bracket, body.mode-overview .a-idx { opacity: 1; }
+.a-layer { font: 500 10px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(150, 190, 255, .5); white-space: nowrap; }
+.a-layer.vert { writing-mode: vertical-rl; }
+.a-bracket { height: 6px; border: 1px solid rgba(150, 190, 255, .16); border-bottom: 0; }
+.a-bracket.vert { width: 6px; border: 1px solid rgba(150, 190, 255, .16); border-right: 0; }
+.a-idx { font: 400 10px/1 var(--mono); color: rgba(150, 190, 255, .32); }
 .a-hit { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; background: none; border: 0; padding: 0; cursor: pointer; }
 body.mode-overview .a-hit { pointer-events: auto; }
 
@@ -206,8 +243,7 @@ body.mode-overview .a-hit { pointer-events: auto; }
   position: fixed; left: 50%; bottom: 18px; z-index: 30; transform: translate(-50%, 12px);
   display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center;
   padding: 10px 12px 10px 18px; border-radius: 999px;
-  border: 1px solid var(--line); background: rgba(8, 14, 30, .82);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line); background: rgba(6, 12, 28, .92);
   width: max-content; max-width: calc(100vw - 32px);
   opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s var(--ease);
 }
@@ -237,7 +273,8 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
     overflow-x: auto; scrollbar-width: none; pointer-events: auto; justify-content: safe center;
   }
   .syn-row::-webkit-scrollbar { display: none; }
-  .syn-row .syn { position: relative; flex: 0 0 auto; max-width: 200px; padding: 8px 12px 9px; transform: none !important; text-align: left !important; }
+  .syn-row .syn { position: relative; flex: 0 0 auto; max-width: 210px; padding: 6px 13px 6px 6px; gap: 9px; transform: none !important; text-align: left !important; flex-direction: row !important; }
+  .syn-row .s-node { flex-basis: 30px; height: 30px; }
   .syn .s-t { font-size: 13.5px; }
   .syn .s-r { display: none; }
   .n-links a { flex-direction: column; align-items: flex-start; gap: 5px; padding: 9px 13px; }

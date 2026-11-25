@@ -6,6 +6,7 @@
   const root = document.documentElement, body = document.body;
   const params = new URLSearchParams(location.search);
   const snapshot = params.has("snapshot"); // still frame for the social preview image
+  const perfProbe = params.has("perf") ? [] : null; // ?perf exposes average draw time as window.__drawMs
   const reduceMotion = snapshot || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ───────── i18n ─────────
@@ -51,7 +52,7 @@
 
   function layout() {
     vw = innerWidth; vh = innerHeight; mobile = vw <= 760;
-    dpr = Math.min(devicePixelRatio || 1, 2);
+    dpr = Math.min(devicePixelRatio || 1, innerWidth <= 760 ? 1.5 : 2);
     sky.width = Math.round(vw * dpr); sky.height = Math.round(vh * dpr);
     sky.style.width = vw + "px"; sky.style.height = vh + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -72,7 +73,7 @@
 
     // overview layout (screen space): tracks as rows on desktop, columns on mobile
     if (!mobile) {
-      const padX = Math.max(110, vw * 0.08), top = 120, bottom = 175;
+      const padX = Math.max(110, vw * 0.08), top = 162, bottom = 175;
       const colW = (vw - 2 * padX) / (maxLen + 1), rowH = (vh - top - bottom) / 2;
       const at = (col, row) => [padX + col * colW, top + row * rowH];
       [N.hello.ox, N.hello.oy] = at(0, 1);
@@ -267,7 +268,7 @@
     b.type = "button";
     b.className = "syn" + (s.kind === "next" ? " primary" : "");
     b.style.setProperty("--sc", s.color);
-    b.innerHTML = `<span class="s-k">${esc(s.kicker)}</span><span class="s-t">${esc(s.title)}</span>${s.reason ? `<span class="s-r">${esc(s.reason)}</span>` : ""}`;
+    b.innerHTML = `<span class="s-node" aria-hidden="true"></span><span class="s-txt"><span class="s-k">${esc(s.kicker)}</span><span class="s-t">${esc(s.title)}</span>${s.reason ? `<span class="s-r">${esc(s.reason)}</span>` : ""}</span>`;
     b.addEventListener("click", () => (s.virtual ? toOverview() : go(s.id)));
     b.setAttribute("aria-label", `${s.kicker}: ${s.title}${s.reason ? ". " + s.reason : ""}`);
     return b;
@@ -335,15 +336,16 @@
     conns = synList.map((s) => {
       const r = s.el.getBoundingClientRect();
       if (!r.width || r.right < 0 || r.left > vw) return null;
+      const nr = s.el.firstElementChild.getBoundingClientRect(), nx = nr.left + nr.width / 2, ny = nr.top + nr.height / 2;
       let ax, ay, x0, y0, c1, c2;
       if (s.side) {
-        ax = s.side === "r" ? r.left : r.right; ay = r.top + r.height / 2;
+        ax = nx; ay = ny;
         const ux = ax - cx, uy = ay - cy, L = Math.hypot(ux, uy);
         x0 = cx + (ux / L) * (D / 2 + 3); y0 = cy + (uy / L) * (D / 2 + 3);
         c1 = [cx + (ux / L) * (D / 2 + 70), cy + (uy / L) * (D / 2 + 70)];
-        c2 = [ax + (s.side === "r" ? -50 : 50), ay];
+        c2 = [ax + (s.side === "r" ? -60 : 60), ay];
       } else {
-        ax = r.left + r.width / 2; ay = s.up ? r.bottom : r.top;
+        ax = nx; ay = ny;
         x0 = cx + Math.max(-D * 0.3, Math.min(D * 0.3, ax - cx)) * 0.6;
         const edge = mobile ? DH / 2 : Math.sqrt(Math.max(0, (D / 2) ** 2 - (x0 - cx) ** 2));
         y0 = s.up ? cy - edge - 2 : cy + edge + 2;
@@ -384,6 +386,34 @@
       d.className = "a-track"; d.style.color = t.color; d.textContent = tr(t.label);
       t.atlasEl = d; atlas.appendChild(d);
     });
+    const mk = (cls, text) => { const d = document.createElement("div"); d.className = cls; d.textContent = text || ""; d.setAttribute("aria-hidden", "true"); atlas.appendChild(d); return d; };
+    layerEls = { inp: mk("a-layer", ui("inputLayer")), hid: mk("a-layer", ui("hiddenLayers")), out: mk("a-layer", ui("outputLayer")), br: mk("a-bracket"),
+      idx: tracks[1].order.map((_, k) => mk("a-idx", "h" + (k + 1))) };
+  }
+  let layerEls = null;
+  function placeLayers() {
+    if (!layerEls) return;
+    const cols = tracks[1].order.map((id) => N[id]), first = cols[0], last = cols[cols.length - 1];
+    const set = (el, x, y, tf) => { el.style.left = x + "px"; el.style.top = y + "px"; el.style.transform = tf; };
+    const L = layerEls;
+    L.hid.classList.toggle("vert", mobile); L.br.classList.toggle("vert", mobile);
+    if (!mobile) {
+      const y = Math.min(...nodes.map((n) => n.oy)) - oR - 52, gap = (last.ox - first.ox) / (cols.length - 1);
+      set(L.inp, N.hello.ox, y, "translate(-50%,-50%)");
+      set(L.out, N.contact.ox, y, "translate(-50%,-50%)");
+      set(L.hid, (first.ox + last.ox) / 2, y, "translate(-50%,-50%)");
+      L.br.style.width = last.ox - first.ox + gap * 0.7 + "px"; L.br.style.height = "";
+      set(L.br, first.ox - gap * 0.35, y + 11, "none");
+      L.idx.forEach((el, k) => { el.style.display = ""; set(el, cols[k].ox, y + 23, "translate(-50%,-50%)"); });
+    } else {
+      const gap = (last.oy - first.oy) / (cols.length - 1);
+      set(L.inp, 12, N.hello.oy, "translate(0,-50%)");
+      set(L.out, 12, N.contact.oy, "translate(0,-50%)");
+      set(L.hid, 8, (first.oy + last.oy) / 2, "translate(0,-50%) rotate(180deg)");
+      L.br.style.height = last.oy - first.oy + gap * 0.7 + "px"; L.br.style.width = "";
+      set(L.br, 26, first.oy - gap * 0.35, "none");
+      L.idx.forEach((el) => (el.style.display = "none"));
+    }
   }
   function placeAtlas() {
     nodes.forEach((n) => {
@@ -399,6 +429,7 @@
       if (!mobile) { t.atlasEl.style.left = f.ox - oR - 22 + "px"; t.atlasEl.style.top = f.oy - oR - 16 + "px"; t.atlasEl.style.transform = "translate(-50%,-50%)"; }
       else { t.atlasEl.style.left = f.ox + "px"; t.atlasEl.style.top = f.oy - oR - 12 + "px"; t.atlasEl.style.transform = "translate(-50%,-100%)"; }
     });
+    placeLayers();
   }
 
   // ───────── Minimap ─────────
@@ -503,27 +534,44 @@
   const rgbCache = {};
   const rgbOf = (hex) => rgbCache[hex] || (rgbCache[hex] = (() => { const v = parseInt(hex.slice(1), 16); return `${(v >> 16) & 255},${(v >> 8) & 255},${v & 255}`; })());
 
+  // Drawing is batched: points and lines are sorted into a few brightness
+  // buckets, so each neuron costs a handful of fill/stroke calls, not thousands.
+  const NB = 5;
+  const buckets = Array.from({ length: NB }, () => []);
+  const clearBuckets = () => buckets.forEach((b) => (b.length = 0));
+  function fillBuckets(rgb, maxA, size) {
+    for (let k = 0; k < NB; k++) {
+      const b = buckets[k]; if (!b.length) continue;
+      ctx.fillStyle = `rgba(${rgb},${(maxA * (k + 1)) / NB})`;
+      ctx.beginPath();
+      for (let i = 0; i < b.length; i += 3) { const sz = size ? size : b[i + 2]; ctx.rect(b[i] - sz / 2, b[i + 1] - sz / 2, sz, sz); }
+      ctx.fill();
+    }
+  }
+
   // a chain of mesh nodes along a curve
   function drawStrand(p, offs, color, alpha, spread) {
     const len = Math.hypot(p[6] - p[0], p[7] - p[1]);
     const n = Math.max(4, Math.min(offs.length, Math.round(len / 22)));
-    const pts = [];
+    const xs = new Float32Array(n), ys = new Float32Array(n);
     for (let i = 0; i < n; i++) {
-      const [u, ox, oy, k] = offs[Math.floor((i / n) * offs.length)];
-      const [x, y] = bez(p, u), s = Math.sin(Math.PI * u) * spread + 1.5;
-      pts.push([x + ox * s * 2, y + oy * s * 2, k]);
+      const o = offs[Math.floor((i / n) * offs.length)];
+      const [x, y] = bez(p, o[0]), s = Math.sin(Math.PI * o[0]) * spread + 1.5;
+      xs[i] = x + o[1] * s * 2; ys[i] = y + o[2] * s * 2;
     }
     const rgb = rgbOf(color);
     ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
     ctx.strokeStyle = `rgba(${rgb},${alpha * 0.35})`; ctx.lineWidth = 0.8; ctx.stroke();
     ctx.beginPath();
-    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j <= i + 2 && j < pts.length; j++) { ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[j][0], pts[j][1]); }
+    for (let i = 0; i < n; i++) for (let j = i + 1; j <= i + 2 && j < n; j++) { ctx.moveTo(xs[i], ys[i]); ctx.lineTo(xs[j], ys[j]); }
     ctx.strokeStyle = `rgba(${rgb},${alpha * 0.45})`; ctx.lineWidth = 0.7; ctx.stroke();
-    for (const [x, y, k] of pts) {
-      ctx.fillStyle = `rgba(215,240,255,${alpha * (0.5 + 0.5 * Math.sin(tnow * 2.2 + k * 30))})`;
-      ctx.fillRect(x - 1, y - 1, 2, 2);
-      if (k > 0.86 && spread > 6) ctx.drawImage(glowSprite(color), x - 8, y - 8, 16, 16);
+    clearBuckets();
+    for (let i = 0; i < n; i++) {
+      const o = offs[Math.floor((i / n) * offs.length)], tw = 0.5 + 0.5 * Math.sin(tnow * 2.2 + o[3] * 30);
+      buckets[Math.min(NB - 1, (tw * NB) | 0)].push(xs[i], ys[i], 0);
+      if (o[3] > 0.86 && spread > 6) ctx.drawImage(glowSprite(color), xs[i] - 8, ys[i] - 8, 16, 16);
     }
+    fillBuckets("215,240,255", alpha, 2);
   }
 
   // one neuron as a rotating plexus sphere, with level of detail by size
@@ -531,36 +579,56 @@
     const g = n.geo, rgb = rgbOf(n.color);
     const c = Math.cos(tnow * 0.12 + n.phase), s = Math.sin(tnow * 0.12 + n.phase);
     const tx = 0.25 + Math.sin(tnow * 0.15 + n.phase) * 0.08, c2 = Math.cos(tx), s2 = Math.sin(tx);
-    const P = (q) => {
-      const x1 = q[0] * c + q[2] * s, z1 = -q[0] * s + q[2] * c;
-      return [x + x1 * r, y + (q[1] * c2 - z1 * s2) * r, ((q[1] * s2 + z1 * c2) + 1) / 2];
-    };
     const big = r > 46, A = alpha * (lit ? 1 : 0.7);
     const gs = r * 2.6;
     ctx.globalAlpha = A * (lit ? 0.4 : 0.25);
     ctx.drawImage(glowSprite(n.color), x - gs / 2, y - gs / 2, gs, gs);
     ctx.globalAlpha = 1;
+
+    // inner texture
     if (r > 110) {
-      const step = r > 220 ? 1 : 2;
+      const step = r > 220 && !mobile ? 1 : 2;
+      clearBuckets();
       for (let i = 0; i < g.dots.length; i += step) {
-        const q = g.dots[i], [px, py, d] = P(q), tw = 0.6 + 0.4 * Math.sin(tnow * 2.5 + q[3] * 50);
-        ctx.fillStyle = `rgba(${rgb},${(0.05 + 0.32 * d) * tw * A})`;
-        const sz = 0.6 + d * 1.1; ctx.fillRect(px, py, sz, sz);
+        const q = g.dots[i];
+        const x1 = q[0] * c + q[2] * s, z1 = -q[0] * s + q[2] * c, d = ((q[1] * s2 + z1 * c2) + 1) / 2;
+        const v = (0.15 + 0.85 * d) * (0.6 + 0.4 * Math.sin(tnow * 2.5 + q[3] * 50));
+        buckets[Math.min(NB - 1, (v * NB) | 0)].push(x + x1 * r, y + (q[1] * c2 - z1 * s2) * r, 0.6 + d * 1.1);
+      }
+      fillBuckets(rgb, 0.37 * A, 0);
+    }
+
+    // wireframe
+    const V = big ? g.hi : g.lo, E = big ? g.hiE : g.loE, m3 = V.length;
+    const px = new Float32Array(m3), py = new Float32Array(m3), pd = new Float32Array(m3);
+    for (let i = 0; i < m3; i++) {
+      const q = V[i], x1 = q[0] * c + q[2] * s, z1 = -q[0] * s + q[2] * c;
+      px[i] = x + x1 * r; py[i] = y + (q[1] * c2 - z1 * s2) * r; pd[i] = ((q[1] * s2 + z1 * c2) + 1) / 2;
+    }
+    const lines = [[], [], [], []];
+    for (const [i, j] of E) lines[Math.min(3, (((pd[i] + pd[j]) / 2) * 4) | 0)].push(i, j);
+    lines.forEach((L, k) => {
+      if (!L.length) return;
+      const d = (k + 0.5) / 4;
+      ctx.strokeStyle = `rgba(${rgb},${(0.06 + 0.5 * d * d) * A})`;
+      ctx.lineWidth = (big ? 0.6 : 0.5) + d * (big ? 0.7 : 0.4);
+      ctx.beginPath();
+      for (let t = 0; t < L.length; t += 2) { ctx.moveTo(px[L[t]], py[L[t]]); ctx.lineTo(px[L[t + 1]], py[L[t + 1]]); }
+      ctx.stroke();
+    });
+
+    // vertices
+    clearBuckets();
+    for (let i = 0; i < m3; i++) {
+      const k = V[i][3], d = pd[i], v = (0.2 + 0.8 * d) * (0.55 + 0.45 * Math.sin(tnow * 1.8 + k * 40));
+      buckets[Math.min(NB - 1, (v * NB) | 0)].push(px[i], py[i], big ? 1 + d * 1.6 : 0.8 + d);
+      if (big && k > 0.8 && d > 0.45) {
+        const gg = 10 + d * Math.min(22, r * 0.08);
+        ctx.globalAlpha = A; ctx.drawImage(glowSprite(n.color), px[i] - gg / 2, py[i] - gg / 2, gg, gg); ctx.globalAlpha = 1;
       }
     }
-    const V = big ? g.hi : g.lo, E = big ? g.hiE : g.loE;
-    const pv = V.map(P);
-    for (const [i, j] of E) {
-      const a = pv[i], b = pv[j], d = (a[2] + b[2]) / 2;
-      ctx.strokeStyle = `rgba(${rgb},${(0.06 + 0.5 * d * d) * A})`; ctx.lineWidth = (big ? 0.6 : 0.5) + d * (big ? 0.7 : 0.4);
-      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
-    }
-    pv.forEach(([px, py, d], i) => {
-      const k = V[i][3], tw = 0.55 + 0.45 * Math.sin(tnow * 1.8 + k * 40);
-      ctx.fillStyle = `rgba(225,245,255,${(0.2 + 0.8 * d) * tw * A})`;
-      const sz = big ? 1 + d * 1.6 : 0.8 + d; ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
-      if (big && k > 0.8 && d > 0.45) { const gg = 10 + d * Math.min(22, r * 0.08); ctx.globalAlpha = A; ctx.drawImage(glowSprite(n.color), px - gg / 2, py - gg / 2, gg, gg); ctx.globalAlpha = 1; }
-    });
+    fillBuckets("225,245,255", A, 0);
+
     if (big) {
       const fy = y - r * 0.85, fl = ctx.createRadialGradient(x - r * 0.1, fy, 0, x - r * 0.1, fy, r * 0.7);
       fl.addColorStop(0, `rgba(190,235,255,${0.26 * A})`); fl.addColorStop(1, "rgba(80,170,255,0)");
@@ -666,7 +734,7 @@
       const every = mode === "focus" ? 0.28 : hoverId ? 0.06 : 0.12;
       while (clock > every) { clock -= every; if (pulses.length < 80) spawnPulse(); }
     }
-    draw(dt);
+    if (perfProbe) { const t0 = performance.now(); draw(dt); perfProbe.push(performance.now() - t0); if (perfProbe.length > 120) perfProbe.shift(); window.__drawMs = perfProbe.reduce((a, b) => a + b, 0) / perfProbe.length; } else draw(dt);
     requestAnimationFrame(frame);
   }
 
