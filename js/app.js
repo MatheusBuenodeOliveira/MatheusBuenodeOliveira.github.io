@@ -7,6 +7,7 @@
   const params = new URLSearchParams(location.search);
   const snapshot = params.has("snapshot"); // still frame for the social preview image
   const perfProbe = params.has("perf") ? [] : null; // ?perf exposes average draw time as window.__drawMs
+  if (snapshot) root.classList.add("still");
   const reduceMotion = snapshot || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ───────── i18n ─────────
@@ -858,7 +859,7 @@
 
   // a one-time hint for touch screens, where the key line is hidden
   function maybeHint() {
-    try { if (!mobile || localStorage.getItem("hinted2")) return; localStorage.setItem("hinted2", "1"); } catch { return; }
+    try { if (snapshot || !mobile || localStorage.getItem("hinted2")) return; localStorage.setItem("hinted2", "1"); } catch { return; }
     const t = document.createElement("div");
     t.className = "toast"; t.textContent = ui("dragHint");
     body.appendChild(t);
@@ -931,9 +932,17 @@
   const startHash = decodeURIComponent(location.hash.slice(1));
   if (snapshot) {
     ["hello", "city", "dellint", "dell1", "dell2", "telus", "agentic", "contact"].forEach((v) => visited.add(v));
-    current = "telus"; setMode("overview"); draw(0);
+    current = "telus"; setMode("overview");
+    if (N[startHash]) { current = null; dive(startHash, false); } // ?snapshot#id: a still close-up of one neuron
+    draw(0);
     // headless capture can resize the page without events or animation frames
-    setInterval(() => { if (innerWidth !== vw || innerHeight !== vh) { layout(); placeAtlas(); } draw(0); }, 200);
+    setInterval(() => {
+      if (innerWidth !== vw || innerHeight !== vh) {
+        layout(); placeAtlas();
+        if (mode === "focus") { cam.x = N[current].wx; cam.y = N[current].wy; renderSynapses(); }
+      }
+      draw(0);
+    }, 200);
   } else if (startHash === "network") {
     setMode("overview");
   } else {

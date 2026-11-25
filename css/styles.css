@@ -317,3 +317,4 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 .n-title:focus { outline: none; }
+.still *, .still *::before, .still *::after { animation: none !important; transition: none !important; }
