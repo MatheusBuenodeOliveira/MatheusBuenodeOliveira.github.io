@@ -237,7 +237,7 @@
 
   // ───────── Synapses: the ways out of the current neuron ─────────
   const synEl = $("#synapses");
-  let conns = [], synList = [];
+  let conns = [], synList = [], somaH = 0;
 
   function synapsesOf(n) {
     const list = [];
@@ -288,6 +288,7 @@
       s.el = synButton(s);
     });
 
+    $("#soma").style.height = "";
     if (!rows) {
       // desktop: synapses leave the neuron towards where their target really is
       const sides = { l: [], r: [] };
@@ -322,10 +323,14 @@
         s.up = up; (up ? top : bot).appendChild(s.el);
       });
       synEl.append(top, bot);
-      const half = DH / 2;
-      top.style.top = Math.max(60, cy - half - 14 - top.offsetHeight) + "px";
-      bot.style.top = Math.min(vh - bot.offsetHeight - 56, cy + half + 14) + "px";
-      [top, bot].forEach((r) => r.addEventListener("scroll", computeConns, { passive: true }));
+      // boxes wrap onto extra lines when needed; the neuron gives up height to make room
+      const headH = $(".hud-top").offsetHeight + 4, footH = 52, gap = 12;
+      const need = Math.max(top.offsetHeight + headH, bot.offsetHeight + footH) + gap;
+      const h = Math.max(220, Math.min(DH, vh - 2 * need));
+      $("#soma").style.height = h + "px";
+      top.style.top = cy - h / 2 - gap - top.offsetHeight + "px";
+      bot.style.top = cy + h / 2 + gap + "px";
+      somaH = h;
     }
     synList = list;
     computeConns();
@@ -347,7 +352,7 @@
       } else {
         ax = nx; ay = ny;
         x0 = cx + Math.max(-D * 0.3, Math.min(D * 0.3, ax - cx)) * 0.6;
-        const edge = mobile ? DH / 2 : Math.sqrt(Math.max(0, (D / 2) ** 2 - (x0 - cx) ** 2));
+        const edge = mobile ? somaH / 2 : Math.sqrt(Math.max(0, (D / 2) ** 2 - (x0 - cx) ** 2));
         y0 = s.up ? cy - edge - 2 : cy + edge + 2;
         c1 = [x0, lerp(y0, ay, 0.5)]; c2 = [ax, lerp(y0, ay, 0.5)];
       }

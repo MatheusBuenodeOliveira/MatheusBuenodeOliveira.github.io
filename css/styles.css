@@ -261,6 +261,8 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
 /* ───────── Mobile ───────── */
 @media (max-width: 760px) {
   .hud-top { padding: 14px 14px; align-items: flex-start; }
+  .brand { min-width: 0; }
+  .brand-name, .brand-role { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brand-name { font-size: 14px; }
   .chip { height: 32px; padding: 0 11px; }
   #netLabel { display: none; }
@@ -269,13 +271,13 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
   .keys, .minimap { display: none; }
   .hud-bottom { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); justify-content: center; }
   .syn-row {
-    position: absolute; left: 0; right: 0; display: flex; gap: 8px; padding: 0 14px;
-    overflow-x: auto; scrollbar-width: none; pointer-events: auto; justify-content: safe center;
+    position: absolute; left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 12px;
+    pointer-events: none;
   }
-  .syn-row::-webkit-scrollbar { display: none; }
-  .syn-row .syn { position: relative; flex: 0 0 auto; max-width: 210px; padding: 6px 13px 6px 6px; gap: 9px; transform: none !important; text-align: left !important; flex-direction: row !important; }
+  .syn-row .syn { position: relative; flex: 0 1 auto; min-width: 0; max-width: calc(50% - 4px); padding: 6px 12px 6px 6px; gap: 8px; transform: none !important; text-align: left !important; flex-direction: row !important; }
+  .syn-row .s-k { font-size: 9px; letter-spacing: .08em; }
+  .syn-row .s-t { font-size: 13px; overflow-wrap: anywhere; }
   .syn-row .s-node { flex-basis: 30px; height: 30px; }
-  .syn .s-t { font-size: 13.5px; }
   .syn .s-r { display: none; }
   .n-links a { flex-direction: column; align-items: flex-start; gap: 5px; padding: 9px 13px; }
   .n-links small { width: auto; }
