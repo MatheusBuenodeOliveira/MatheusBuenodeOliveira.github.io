@@ -39,6 +39,7 @@
   S.links.forEach(([a, b, w, r]) => addEdge(a, b, w, "link", r));
   const edgeBetween = (a, b) => a.adj.find((e) => (e.a === a && e.b === b) || (e.a === b && e.b === a));
 
+  nodes.forEach((n) => { if (n.photo) new Image().src = n.photo.src; }); // preload photos
   let visited;
   try { visited = new Set(JSON.parse(sessionStorage.getItem("visited") || "[]")); } catch { visited = new Set(); }
   const saveVisited = () => { try { sessionStorage.setItem("visited", JSON.stringify([...visited])); } catch {} };
@@ -57,7 +58,7 @@
 
     if (!mobile) { D = Math.round(Math.min(vh * 0.72, vw * 0.48, 680)); DH = D; }
     else { D = Math.round(Math.min(vw * 0.86, 420)); DH = Math.round(Math.min(vh * 0.58, D * 1.75)); }
-    orbR = D / 2;
+    orbR = mobile ? Math.min(DH / 2, D * 0.62) : D / 2;
     root.style.setProperty("--D", D + "px");
     root.style.setProperty("--DH", DH + "px");
 
@@ -210,6 +211,7 @@
     } else k = `<span>${esc(tr(n.kicker))}</span>`;
 
     $("#somaInner").innerHTML = [
+      n.photo ? `<img class="n-photo ${n.photo.kind}" src="${esc(n.photo.src)}" alt="${esc(tr(n.photo.alt))}" />` : "",
       `<p class="k-line">${k}</p>`,
       `<h2 class="n-title" tabindex="-1">${esc(tr(n.title))}</h2>`,
       n.org ? `<p class="n-org">${esc(tr(n.org))}</p>` : "",
@@ -349,6 +351,7 @@
       }
       return { p: [x0, y0, c1[0], c1[1], c2[0], c2[1], ax, ay], color: s.color, w: s.w, kind: s.kind };
     }).filter(Boolean);
+    conns.forEach((c, i) => (c.offs = strandOffsets(501 + i * 13, 22)));
   }
 
   // ───────── Bottom HUD: where am I in this path ─────────
@@ -437,19 +440,59 @@
     return (glow[c] = s);
   }
 
-  let stars = [];
-  function buildStars() {
-    const xs = nodes.map((n) => n.wx), ys = nodes.map((n) => n.wy);
-    const x0 = Math.min(...xs) - vw, x1 = Math.max(...xs) + vw, y0 = Math.min(...ys) - vh, y1 = Math.max(...ys) + vh;
-    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    stars = Array.from({ length: 260 }, () => ({ x: lerp(x0, x1, rnd()), y: lerp(y0, y1, rnd()), d: 0.25 + rnd() * 0.6, a: 0.15 + rnd() * 0.45, r: 0.5 + rnd() * 1.1, ox: rnd() * vw, oy: rnd() * vh }));
+  // ───────── Plexus geometry: every neuron is a low-poly mesh ─────────
+  const mkRnd = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  function fibSphere(n, rnd, jit) {
+    return Array.from({ length: n }, (_, i) => {
+      const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963 + rnd() * jit, k = 0.9 + rnd() * 0.16;
+      return [Math.cos(th) * r * k, y * k * 0.96, Math.sin(th) * r * k, rnd()];
+    });
   }
+  function nearEdges(pts, k) {
+    const seen = new Set(), out = [];
+    pts.forEach((p, i) => pts.map((q, j) => [j, (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2])
+      .sort((a, b) => a[1] - b[1]).slice(1, k + 1)
+      .forEach(([j]) => { const key = i < j ? i + "," + j : j + "," + i; if (!seen.has(key)) { seen.add(key); out.push([i, j]); } }));
+    return out;
+  }
+  const GEO = [11, 23, 37].map((seed) => {
+    const rnd = mkRnd(seed);
+    const hi = fibSphere(150, rnd, 0.25), lo = fibSphere(34, rnd, 0.3);
+    const dots = Array.from({ length: 1500 }, (_, i) => {
+      const u = rnd() * Math.PI * 2, v = Math.acos(2 * rnd() - 1), d = i < 950 ? 0.82 + rnd() * 0.16 : Math.cbrt(rnd()) * 0.8;
+      return [Math.sin(v) * Math.cos(u) * d, Math.cos(v) * d, Math.sin(v) * Math.sin(u) * d, rnd()];
+    });
+    return { hi, hiE: nearEdges(hi, 4), lo, loE: nearEdges(lo, 3), dots };
+  });
+  nodes.forEach((n, i) => { n.geo = GEO[i % 3]; n.phase = i * 1.7; });
+
+  // strand offsets: plexus chains used for synapses
+  function strandOffsets(seed, count = 30) {
+    const rnd = mkRnd(seed);
+    return Array.from({ length: count }, () => [rnd(), rnd() - 0.5, rnd() - 0.5, rnd()]).sort((a, b) => a[0] - b[0]);
+  }
+  edges.forEach((e, i) => (e.offs = strandOffsets(101 + i * 7)));
+
+  // background: soft bokeh lights at several depths plus fine dust
+  let bokeh = [], dust = [];
+  const bokehDisc = (() => {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const g = c.getContext("2d"), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    r.addColorStop(0, "rgba(90,175,255,1)"); r.addColorStop(0.65, "rgba(70,160,255,.75)"); r.addColorStop(1, "rgba(70,160,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, 128, 128); return c;
+  })();
+  function buildStars() {
+    const rnd = mkRnd(7);
+    bokeh = Array.from({ length: mobile ? 34 : 60 }, () => ({ x: rnd(), y: rnd(), r: 3 + Math.pow(rnd(), 2.3) * (mobile ? 34 : 52), a: 0.04 + rnd() * 0.17, d: 0.05 + rnd() * 0.3, ph: rnd() * 6.28 }));
+    dust = Array.from({ length: 140 }, () => ({ x: rnd(), y: rnd(), d: 0.2 + rnd() * 0.5, a: 0.1 + rnd() * 0.35 }));
+  }
+  const wrap = (v, size) => ((v % size) + size) % size;
 
   let pulses = [];
   function spawnPulse() {
     if (mode === "focus") {
       if (!conns.length) return;
-      pulses.push({ conn: conns[(Math.random() * conns.length) | 0], t: 0, v: 0.5 + Math.random() * 0.4 });
+      pulses.push({ conn: conns[(Math.random() * conns.length) | 0], t: 0, v: 0.45 + Math.random() * 0.35 });
       return;
     }
     const pool = hoverId ? N[hoverId].adj : edges;
@@ -457,57 +500,114 @@
   }
 
   const onScreen = (x, y, r) => x + r > -50 && x - r < vw + 50 && y + r > -50 && y - r < vh + 50;
+  const rgbCache = {};
+  const rgbOf = (hex) => rgbCache[hex] || (rgbCache[hex] = (() => { const v = parseInt(hex.slice(1), 16); return `${(v >> 16) & 255},${(v >> 8) & 255},${v & 255}`; })());
 
+  // a chain of mesh nodes along a curve
+  function drawStrand(p, offs, color, alpha, spread) {
+    const len = Math.hypot(p[6] - p[0], p[7] - p[1]);
+    const n = Math.max(4, Math.min(offs.length, Math.round(len / 22)));
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const [u, ox, oy, k] = offs[Math.floor((i / n) * offs.length)];
+      const [x, y] = bez(p, u), s = Math.sin(Math.PI * u) * spread + 1.5;
+      pts.push([x + ox * s * 2, y + oy * s * 2, k]);
+    }
+    const rgb = rgbOf(color);
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
+    ctx.strokeStyle = `rgba(${rgb},${alpha * 0.35})`; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j <= i + 2 && j < pts.length; j++) { ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[j][0], pts[j][1]); }
+    ctx.strokeStyle = `rgba(${rgb},${alpha * 0.45})`; ctx.lineWidth = 0.7; ctx.stroke();
+    for (const [x, y, k] of pts) {
+      ctx.fillStyle = `rgba(215,240,255,${alpha * (0.5 + 0.5 * Math.sin(tnow * 2.2 + k * 30))})`;
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+      if (k > 0.86 && spread > 6) ctx.drawImage(glowSprite(color), x - 8, y - 8, 16, 16);
+    }
+  }
+
+  // one neuron as a rotating plexus sphere, with level of detail by size
+  function drawNeuron(n, x, y, r, alpha, lit) {
+    const g = n.geo, rgb = rgbOf(n.color);
+    const c = Math.cos(tnow * 0.12 + n.phase), s = Math.sin(tnow * 0.12 + n.phase);
+    const tx = 0.25 + Math.sin(tnow * 0.15 + n.phase) * 0.08, c2 = Math.cos(tx), s2 = Math.sin(tx);
+    const P = (q) => {
+      const x1 = q[0] * c + q[2] * s, z1 = -q[0] * s + q[2] * c;
+      return [x + x1 * r, y + (q[1] * c2 - z1 * s2) * r, ((q[1] * s2 + z1 * c2) + 1) / 2];
+    };
+    const big = r > 46, A = alpha * (lit ? 1 : 0.7);
+    const gs = r * 2.6;
+    ctx.globalAlpha = A * (lit ? 0.4 : 0.25);
+    ctx.drawImage(glowSprite(n.color), x - gs / 2, y - gs / 2, gs, gs);
+    ctx.globalAlpha = 1;
+    if (r > 110) {
+      const step = r > 220 ? 1 : 2;
+      for (let i = 0; i < g.dots.length; i += step) {
+        const q = g.dots[i], [px, py, d] = P(q), tw = 0.6 + 0.4 * Math.sin(tnow * 2.5 + q[3] * 50);
+        ctx.fillStyle = `rgba(${rgb},${(0.05 + 0.32 * d) * tw * A})`;
+        const sz = 0.6 + d * 1.1; ctx.fillRect(px, py, sz, sz);
+      }
+    }
+    const V = big ? g.hi : g.lo, E = big ? g.hiE : g.loE;
+    const pv = V.map(P);
+    for (const [i, j] of E) {
+      const a = pv[i], b = pv[j], d = (a[2] + b[2]) / 2;
+      ctx.strokeStyle = `rgba(${rgb},${(0.06 + 0.5 * d * d) * A})`; ctx.lineWidth = (big ? 0.6 : 0.5) + d * (big ? 0.7 : 0.4);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    pv.forEach(([px, py, d], i) => {
+      const k = V[i][3], tw = 0.55 + 0.45 * Math.sin(tnow * 1.8 + k * 40);
+      ctx.fillStyle = `rgba(225,245,255,${(0.2 + 0.8 * d) * tw * A})`;
+      const sz = big ? 1 + d * 1.6 : 0.8 + d; ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
+      if (big && k > 0.8 && d > 0.45) { const gg = 10 + d * Math.min(22, r * 0.08); ctx.globalAlpha = A; ctx.drawImage(glowSprite(n.color), px - gg / 2, py - gg / 2, gg, gg); ctx.globalAlpha = 1; }
+    });
+    if (big) {
+      const fy = y - r * 0.85, fl = ctx.createRadialGradient(x - r * 0.1, fy, 0, x - r * 0.1, fy, r * 0.7);
+      fl.addColorStop(0, `rgba(190,235,255,${0.26 * A})`); fl.addColorStop(1, "rgba(80,170,255,0)");
+      ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(x - r * 0.1, fy, r * 0.7, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.globalAlpha = A; ctx.drawImage(glowSprite(n.color), x - r * 0.6, y - r * 0.6, r * 1.2, r * 1.2); ctx.globalAlpha = 1;
+    }
+  }
+
+  let tnow = 0;
   function draw(dt) {
-    ctx.clearRect(0, 0, vw, vh);
-    const vg = ctx.createRadialGradient(vw / 2, vh / 2, 0, vw / 2, vh / 2, Math.max(vw, vh) * 0.75);
-    vg.addColorStop(0, "#0a1630"); vg.addColorStop(0.55, "#060d1f"); vg.addColorStop(1, "#03060f");
-    ctx.fillStyle = vg; ctx.fillRect(0, 0, vw, vh);
+    tnow = performance.now() / 1000;
+    const bg = ctx.createRadialGradient(vw / 2, vh / 2, 0, vw / 2, vh / 2, Math.max(vw, vh) * 0.85);
+    bg.addColorStop(0, "#0a2a55"); bg.addColorStop(0.45, "#061633"); bg.addColorStop(1, "#020610");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, vw, vh);
 
-    // dust: parallax depth while flying, a still field in the overview
-    for (const s of stars) {
-      let x = (s.x - cam.x) * cam.z * s.d + vw / 2, y = (s.y - cam.y) * cam.z * s.d + vh / 2;
-      x = lerp(x, s.ox, m); y = lerp(y, s.oy, m);
-      if (x < 0 || x > vw || y < 0 || y > vh) continue;
-      ctx.fillStyle = `rgba(160,195,255,${s.a})`;
-      ctx.fillRect(x, y, s.r, s.r);
+    ctx.globalCompositeOperation = "lighter";
+    const W = vw + 240, H = vh + 240;
+    for (const b of bokeh) {
+      const x = wrap(b.x * W - cam.x * cam.z * b.d * (1 - m) + Math.sin(tnow * 0.1 + b.ph) * 14, W) - 120;
+      const y = wrap(b.y * H - cam.y * cam.z * b.d * (1 - m) + Math.cos(tnow * 0.08 + b.ph) * 10, H) - 120;
+      ctx.globalAlpha = b.a; ctx.drawImage(bokehDisc, x - b.r, y - b.r, b.r * 2, b.r * 2);
+    }
+    ctx.globalAlpha = 1;
+    for (const s of dust) {
+      const x = wrap(s.x * W - cam.x * cam.z * s.d * (1 - m), W) - 120, y = wrap(s.y * H - cam.y * cam.z * s.d * (1 - m), H) - 120;
+      ctx.fillStyle = `rgba(160,205,255,${s.a})`; ctx.fillRect(x, y, 1.2, 1.2);
     }
 
     const P = new Map(nodes.map((n) => [n, pos(n)]));
     const focusNode = mode === "focus" ? N[current] : null;
     const hl = hoverId ? N[hoverId] : null;
-    const lineScale = Math.max(0.7, Math.min(2.2, cam.z * 2 + m));
+    const spread = lerp(orbR * cam.z * 0.11, 5, m);
 
     for (const e of edges) {
       const a = P.get(e.a), b = P.get(e.b);
       if (Math.max(a[0], b[0]) < -100 || Math.min(a[0], b[0]) > vw + 100 || Math.max(a[1], b[1]) < -100 || Math.min(a[1], b[1]) > vh + 100) continue;
-      const p = curve(a, b, e.bend);
       const touch = hl && (e.a === hl || e.b === hl);
-      let alpha = e.kind === "link" ? 0.12 + 0.14 * e.w : 0.3;
-      if (visited.has(e.a.id) && visited.has(e.b.id)) alpha += 0.15;
-      if (hl) alpha = touch ? 0.9 : alpha * 0.3;
-      if (focusNode && (e.a === focusNode || e.b === focusNode)) alpha *= 0.2;
-      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
-      const g = ctx.createLinearGradient(a[0], a[1], b[0], b[1]);
-      g.addColorStop(0, hexA(e.a.color, alpha)); g.addColorStop(1, hexA(e.b.color, alpha));
-      ctx.strokeStyle = g;
-      ctx.lineWidth = (e.kind === "link" ? 1 : 1.6) * (touch ? 1.7 : 1) * lineScale;
-      ctx.setLineDash(e.kind === "link" ? [4, 6] : []);
-      ctx.stroke();
+      let alpha = e.kind === "link" ? 0.35 + 0.3 * e.w : 0.75;
+      if (visited.has(e.a.id) && visited.has(e.b.id)) alpha = Math.min(1, alpha + 0.2);
+      if (hl) alpha = touch ? 1 : alpha * 0.25;
+      if (focusNode && (e.a === focusNode || e.b === focusNode)) alpha *= 0.15;
+      drawStrand(curve(a, b, e.bend), e.offs, e.kind === "link" ? e.b.color : e.a.color, alpha, spread * (e.kind === "link" ? 0.7 : 1));
     }
 
-    if (mode === "focus") for (const c of conns) {
-      const p = c.p;
-      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
-      const g = ctx.createLinearGradient(p[0], p[1], p[6], p[7]);
-      g.addColorStop(0, hexA(N[current].color, 0.5)); g.addColorStop(1, hexA(c.color, c.kind === "link" ? 0.5 : 0.85));
-      ctx.strokeStyle = g; ctx.lineWidth = c.kind === "link" ? 1 : 1.8;
-      ctx.setLineDash(c.kind === "link" ? [4, 5] : []);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
+    if (mode === "focus") conns.forEach((c) => drawStrand(c.p, c.offs, c.color, c.kind === "link" ? 0.75 : 1, orbR * 0.07));
 
-    ctx.globalCompositeOperation = "lighter";
     pulses = pulses.filter((q) => {
       q.t += q.v * dt;
       if (q.t >= 1) return false;
@@ -515,7 +615,7 @@
       if (q.conn) { if (mode !== "focus" || !conns.includes(q.conn)) return false; [x, y] = bez(q.conn.p, q.t); c = q.conn.color; }
       else { if (mode === "focus") return false; const a = P.get(q.e.a), b = P.get(q.e.b); [x, y] = bez(curve(a, b, q.e.bend), q.t); c = q.t < 0.5 ? q.e.a.color : q.e.b.color; }
       if (!onScreen(x, y, 0)) return true;
-      const s = q.conn ? 22 : 12 + m * 8;
+      const s = q.conn ? 34 : 16 + m * 8;
       ctx.drawImage(glowSprite(c), x - s / 2, y - s / 2, s, s);
       return true;
     });
@@ -528,39 +628,31 @@
       });
       ctx.globalAlpha = 1;
     }
-    ctx.globalCompositeOperation = "source-over";
 
-    const tnow = performance.now() / 1000;
     for (const n of nodes) {
-      if (n === focusNode) continue; // the DOM neuron sits on top of it
       const [x, y] = P.get(n), r = rad(n);
-      if (!onScreen(x, y, r * 2)) continue;
+      if (!onScreen(x, y, r * 1.3)) continue;
       const lit = visited.has(n.id) || n.id === current;
       const dim = hl && hl !== n && !hl.adj.some((e) => e.a === n || e.b === n);
-      const base = dim ? 0.35 : 1;
-      const gs = r * 3.2;
-      ctx.globalCompositeOperation = "lighter";
-      ctx.globalAlpha = base * (lit ? 0.55 : 0.32);
-      ctx.drawImage(glowSprite(n.color), x - gs / 2, y - gs / 2, gs, gs);
-      ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = base;
-      const g = ctx.createRadialGradient(x, y - r * 0.35, r * 0.1, x, y, r);
-      g.addColorStop(0, hexA(n.color, lit ? 0.55 : 0.3)); g.addColorStop(0.7, "rgba(6,12,28,.96)"); g.addColorStop(1, "rgba(6,12,28,.98)");
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-      ctx.lineWidth = Math.max(1, r * 0.03); ctx.strokeStyle = hexA(n.color, lit ? 0.9 : 0.55); ctx.stroke();
+      drawNeuron(n, x, y, r, dim ? 0.3 : 1, lit);
       if (n.id === current && m > 0.5) {
         const k = (tnow % 2) / 2;
         ctx.beginPath(); ctx.arc(x, y, r + 4 + k * 16, 0, Math.PI * 2);
         ctx.strokeStyle = hexA(n.color, 0.8 * (1 - k)); ctx.lineWidth = 1.5; ctx.stroke();
       }
-      if (r > 26 && m < 0.6) {
-        const fs = Math.max(11, Math.min(30, r * 0.16));
-        ctx.font = `500 ${fs}px Geist, system-ui, sans-serif`;
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillStyle = `rgba(230,238,252,${Math.min(1, (r - 26) / 40) * (1 - m)})`;
-        ctx.fillText(tr(n.short), x, y);
-      }
-      ctx.globalAlpha = 1;
+    }
+    ctx.globalCompositeOperation = "source-over";
+
+    // names on the neurons you pass while flying
+    for (const n of nodes) {
+      if (n === focusNode) continue;
+      const [x, y] = P.get(n), r = rad(n);
+      if (r <= 26 || m >= 0.6 || !onScreen(x, y, r)) continue;
+      const fs = Math.max(11, Math.min(30, r * 0.16));
+      ctx.font = `500 ${fs}px Geist, system-ui, sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = `rgba(230,238,252,${Math.min(1, (r - 26) / 40) * (1 - m)})`;
+      ctx.fillText(tr(n.short), x, y);
     }
   }
 

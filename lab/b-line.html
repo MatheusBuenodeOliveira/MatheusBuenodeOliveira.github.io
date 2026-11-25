@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design lab · B line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root { --ink: #e6eefc; --muted: #7688a8; --line: rgba(150,190,255,.14); --c: #5cc8ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #02050c; color: var(--ink); font: 400 15px/1.55 "Geist", system-ui, sans-serif; }
+  header { max-width: 1240px; margin: 0 auto; padding: 40px 24px 0; }
+  header h1 { margin: 0; font-weight: 500; font-size: 28px; letter-spacing: -.02em; }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  nav { max-width: 1240px; margin: 18px auto 0; padding: 0 24px; display: flex; gap: 8px; flex-wrap: wrap; }
+  nav a { font: 500 12px/1 "Geist Mono", monospace; color: var(--ink); text-decoration: none; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+  nav a:hover { border-color: var(--c); }
+  .variant { max-width: 1240px; margin: 34px auto 0; padding: 0 24px; scroll-margin-top: 16px; }
+  .v-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+  .v-head b { font: 500 12px/1 "Geist Mono", monospace; letter-spacing: .1em; color: var(--c); border: 1px solid #5cc8ff55; padding: 6px 8px; border-radius: 6px; }
+  .v-head h2 { margin: 0; font-size: 20px; font-weight: 500; }
+  .v-head span { color: var(--muted); font-size: 14px; }
+  .stage { position: relative; height: 600px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .content { position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--R) * 1.3); transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .avatar { width: calc(var(--R) * .4); height: calc(var(--R) * .4); border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 14px; box-shadow: 0 0 0 1px #5cc8ffaa, 0 0 36px #3aa0ff66; }
+  .k { font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--c); margin: 0; }
+  .content h3 { margin: 8px 0 4px; font: 400 calc(var(--R) * .16)/1.05 "Instrument Serif", serif; letter-spacing: 0; text-shadow: 0 0 24px rgba(2,8,20,.9); }
+  .content p.s { margin: 0; color: #b4c2dc; font-size: 14px; text-shadow: 0 0 12px rgba(2,8,20,.9); }
+  .pill { position: absolute; transform: translate(0, -50%); padding: 9px 15px; border-radius: 999px; font-size: 14px; white-space: nowrap; background: rgba(4,12,28,.75); border: 1px solid #5cc8ff55; backdrop-filter: blur(8px); }
+  .pill small { display: block; font: 500 10px/1 "Geist Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--c); margin-bottom: 4px; }
+  footer { max-width: 1240px; margin: 40px auto 60px; padding: 0 24px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Design lab · the B line</h1>
+  <p>Five takes on the glowing, detailed look. Same content, live and animated. Scroll through and pick one, or tell me which parts to combine.</p>
+</header>
+<nav><a href="#b1">B1 Plexus shell</a><a href="#b2">B2 Living plexus</a><a href="#b3">B3 Nebula core</a><a href="#b4">B4 Holo shells</a><a href="#b5">B5 Dendritic plexus</a></nav>
+
+<section class="variant" id="b1"><div class="v-head"><b>B1</b><h2>Plexus shell</h2><span>Low-poly wireframe sphere, glowing vertices, dense inner dots, bokeh depth.</span></div><div class="stage" data-v="shell"></div></section>
+<section class="variant" id="b2"><div class="v-head"><b>B2</b><h2>Living plexus</h2><span>Points drift inside the neuron and connect when close, so the mesh is always rewiring itself.</span></div><div class="stage" data-v="living"></div></section>
+<section class="variant" id="b3"><div class="v-head"><b>B3</b><h2>Nebula core</h2><span>A glowing gas core inside a particle shell, smoky light filaments, lens flares.</span></div><div class="stage" data-v="nebula"></div></section>
+<section class="variant" id="b4"><div class="v-head"><b>B4</b><h2>Holo shells</h2><span>Nested wireframe globes rotating on different axes, orbiting satellites, light beams as synapses.</span></div><div class="stage" data-v="holo"></div></section>
+<section class="variant" id="b5"><div class="v-head"><b>B5</b><h2>Dendritic plexus</h2><span>The closest to your reference: a plexus neuron with mesh tendrils reaching out like dendrites.</span></div><div class="stage" data-v="dendritic"></div></section>
+
+<footer>All five keep the same flow you approved: close-up neuron, synapses to the next one, full network view.</footer>
+
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const bez = (p, t) => { const u = 1 - t, a = u*u*u, b = 3*u*u*t, c = 3*u*t*t, d = t*t*t; return [a*p[0]+b*p[2]+c*p[4]+d*p[6], a*p[1]+b*p[3]+c*p[5]+d*p[7]]; };
+  const G = {};
+  const glow = (rgb) => {
+    if (G[rgb]) return G[rgb];
+    const s = document.createElement("canvas"); s.width = s.height = 64;
+    const g = s.getContext("2d"), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.15, `rgba(${rgb},.95)`); r.addColorStop(.45, `rgba(${rgb},.22)`); r.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64); return (G[rgb] = s);
+  };
+  const disc = (() => { const s = document.createElement("canvas"); s.width = s.height = 128; const g = s.getContext("2d"), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    r.addColorStop(0, "rgba(90,175,255,1)"); r.addColorStop(.65, "rgba(70,160,255,.75)"); r.addColorStop(1, "rgba(70,160,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return s; })();
+  const fib = (n, rnd, jit = 0) => Array.from({ length: n }, (_, i) => { const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963 + rnd() * jit; return [Math.cos(th) * r, y, Math.sin(th) * r, rnd()]; });
+  const rotator = (ry, rx) => { const c1 = Math.cos(ry), s1 = Math.sin(ry), c2 = Math.cos(rx), s2 = Math.sin(rx);
+    return (q) => { const x1 = q[0] * c1 + q[2] * s1, z1 = -q[0] * s1 + q[2] * c1; return [x1, q[1] * c2 - z1 * s2, q[1] * s2 + z1 * c2]; }; };
+  const neighbours = (pts, k) => { const e = new Set(), out = [];
+    pts.forEach((p, i) => pts.map((q, j) => [j, (q[0]-p[0])**2 + (q[1]-p[1])**2 + (q[2]-p[2])**2]).sort((a, b) => a[1] - b[1]).slice(1, k + 1)
+      .forEach(([j]) => { const key = i < j ? i + "," + j : j + "," + i; if (!e.has(key)) { e.add(key); out.push([i, j]); } })); return out; };
+
+  // shared background: deep blue gradient + bokeh lights at several depths
+  function makeBokeh(S, n = 70, seed = 3) { const rnd = rng(seed); S.bokeh = Array.from({ length: n }, () => ({ x: rnd() * S.w, y: rnd() * S.h, r: 2 + Math.pow(rnd(), 2.3) * 50, a: .04 + rnd() * .2, z: .2 + rnd(), ph: rnd() * TAU })); }
+  function background(S, c0 = "#0a2a55") {
+    const { ctx, w, h, cx, cy, t } = S;
+    const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .9);
+    bg.addColorStop(0, c0); bg.addColorStop(.45, "#061633"); bg.addColorStop(1, "#020610");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = "lighter";
+    for (const b of S.bokeh) {
+      const x = b.x + Math.sin(t * .1 * b.z + b.ph) * 16 * b.z, y = b.y + Math.cos(t * .08 * b.z + b.ph) * 12 * b.z;
+      ctx.globalAlpha = b.a; ctx.drawImage(disc, x - b.r, y - b.r, b.r * 2, b.r * 2);
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+  }
+  function veil(S, k = .8) {
+    const { ctx, cx, cy, R } = S, v = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * k);
+    v.addColorStop(0, "rgba(3,10,26,.78)"); v.addColorStop(.7, "rgba(3,10,26,.5)"); v.addColorStop(1, "rgba(3,10,26,0)");
+    ctx.fillStyle = v; ctx.beginPath(); ctx.arc(cx, cy, R * k, 0, TAU); ctx.fill();
+  }
+  const axonPath = (S, t, k = .98) => { const a = Math.atan2(t.y - S.cy, t.x - S.cx), x0 = S.cx + Math.cos(a) * S.R * k, y0 = S.cy + Math.sin(a) * S.R * k;
+    return [x0, y0, x0 + Math.cos(a) * S.R * .55, y0 + Math.sin(a) * S.R * .55, t.x - (t.x - x0) * .35, t.y, t.x, t.y]; };
+  function plexusStrand(S, p, rnd, density = 26, spreadK = .1) {
+    const nodes = [];
+    for (let i = 0; i <= density; i++) {
+      const u = i / density, [x, y] = bez(p, u), sp = Math.sin(Math.PI * u) * S.R * spreadK + 2;
+      nodes.push([x + (rnd() - .5) * sp * 2, y + (rnd() - .5) * sp * 2, rnd()]);
+      if (i % 2 && i < density) { const [x2, y2] = bez(p, u + .5 / density); nodes.push([x2 + (rnd() - .5) * sp * 2.4, y2 + (rnd() - .5) * sp * 2.4, rnd()]); }
+    }
+    const links = []; nodes.forEach((q, i) => nodes.forEach((o, j) => { if (j > i && Math.hypot(q[0] - o[0], q[1] - o[1]) < S.R * .16) links.push([i, j]); }));
+    return { p, nodes, links };
+  }
+  function drawStrand(S, s, i) {
+    const { ctx, t, h } = S;
+    ctx.lineWidth = .8; ctx.strokeStyle = "rgba(120,200,255,.22)";
+    ctx.beginPath(); for (const [a, b] of s.links) { ctx.moveTo(s.nodes[a][0], s.nodes[a][1]); ctx.lineTo(s.nodes[b][0], s.nodes[b][1]); } ctx.stroke();
+    for (const [x, y, k] of s.nodes) {
+      const tw = .5 + .5 * Math.sin(t * 2.2 + k * 30);
+      ctx.fillStyle = `rgba(190,235,255,${.35 + .5 * tw})`; ctx.fillRect(x - 1, y - 1, 2, 2);
+      if (k > .82) ctx.drawImage(glow("90,190,255"), x - 9, y - 9, 18, 18);
+    }
+    const [px, py] = bez(s.p, (t * .32 + i * .31) % 1);
+    ctx.drawImage(glow("140,220,255"), px - 20, py - 20, 40, 40);
+    ctx.drawImage(glow("120,210,255"), s.p[6] - 26, s.p[7] - 26, 52, 52);
+  }
+
+  // ───────── B1 · Plexus shell ─────────
+  const shell = {
+    init(S) {
+      const rnd = rng(23); makeBokeh(S);
+      S.v = fib(170, rnd, .25).map(([x, y, z, k]) => { const m = .9 + rnd() * .16; return [x * m, y * m * .96, z * m, k]; });
+      S.e = neighbours(S.v, 4);
+      S.dots = Array.from({ length: 1800 }, (_, i) => { const u = rnd() * TAU, v = Math.acos(2 * rnd() - 1), d = i < 1100 ? .82 + rnd() * .16 : Math.cbrt(rnd()) * .8; return [Math.sin(v) * Math.cos(u) * d, Math.cos(v) * d, Math.sin(v) * Math.sin(u) * d, rnd()]; });
+      S.strands = S.targets.map((t) => plexusStrand(S, axonPath(S, t), rnd));
+    },
+    draw(S) {
+      const { ctx, cx, cy, R, t } = S;
+      background(S);
+      ctx.globalCompositeOperation = "lighter";
+      S.strands.forEach((s, i) => drawStrand(S, s, i));
+      const rot = rotator(t * .12, .25 + Math.sin(t * .15) * .08);
+      const P = (q) => { const [x, y, z] = rot(q); return [cx + x * R, cy + y * R, (z + 1) / 2]; };
+      for (const q of S.dots) { const [x, y, d] = P(q), tw = .6 + .4 * Math.sin(t * 2.5 + q[3] * 50); ctx.fillStyle = `rgba(${90 + d * 80},${180 + d * 50},255,${(.06 + .3 * d) * tw})`; const s = .6 + d * 1.1; ctx.fillRect(x, y, s, s); }
+      const pv = S.v.map(P);
+      for (const [i, j] of S.e) { const a = pv[i], b = pv[j], d = (a[2] + b[2]) / 2; ctx.strokeStyle = `rgba(150,215,255,${.05 + .42 * d * d})`; ctx.lineWidth = .6 + d * .7; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      pv.forEach(([x, y, d], i) => { const k = S.v[i][3], tw = .55 + .45 * Math.sin(t * 1.8 + k * 40); ctx.fillStyle = `rgba(220,245,255,${(.2 + .8 * d) * tw})`; const s = 1 + d * 1.6; ctx.fillRect(x - s / 2, y - s / 2, s, s); if (k > .8 && d > .45) { const g = 10 + d * 18; ctx.drawImage(glow("110,200,255"), x - g / 2, y - g / 2, g, g); } });
+      const fl = ctx.createRadialGradient(cx - R * .1, cy - R * .85, 0, cx - R * .1, cy - R * .85, R * .7);
+      fl.addColorStop(0, "rgba(180,230,255,.3)"); fl.addColorStop(1, "rgba(80,170,255,0)"); ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(cx - R * .1, cy - R * .85, R * .7, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+      veil(S);
+    },
+  };
+
+  // ───────── B2 · Living plexus ─────────
+  const living = {
+    init(S) {
+      const rnd = rng(41); makeBokeh(S, 60, 9);
+      S.pts = Array.from({ length: 230 }, () => { const u = rnd() * TAU, v = Math.acos(2 * rnd() - 1), d = Math.pow(rnd(), .35); return { p: [Math.sin(v) * Math.cos(u) * d, Math.cos(v) * d, Math.sin(v) * Math.sin(u) * d], v: [(rnd() - .5) * .08, (rnd() - .5) * .08, (rnd() - .5) * .08], k: rnd() }; });
+      S.flows = S.targets.map((t) => ({ p: axonPath(S, t), parts: Array.from({ length: 46 }, () => ({ u: rnd(), o: [(rnd() - .5), (rnd() - .5)], s: .05 + rnd() * .06 })) }));
+    },
+    draw(S) {
+      const { ctx, cx, cy, R, t, dt } = S;
+      background(S, "#082447");
+      for (const q of S.pts) {
+        for (let i = 0; i < 3; i++) q.p[i] += q.v[i] * dt;
+        const L = Math.hypot(...q.p); if (L > 1) { q.p = q.p.map((x) => x / L); const dot = q.v[0] * q.p[0] + q.v[1] * q.p[1] + q.v[2] * q.p[2]; q.v = q.v.map((x, i) => x - 2 * dot * q.p[i]); }
+      }
+      const rot = rotator(t * .1, .3);
+      const P = S.pts.map((q) => { const [x, y, z] = rot(q.p); return [cx + x * R, cy + y * R, (z + 1) / 2, q.k]; });
+      ctx.globalCompositeOperation = "lighter";
+      // synapse flows: moving points that also link up
+      for (const f of S.flows) {
+        const pts = f.parts.map((q) => { q.u = (q.u + q.s * dt) % 1; const [x, y] = bez(f.p, q.u), sp = Math.sin(Math.PI * q.u) * R * .12 + 3; return [x + q.o[0] * sp, y + q.o[1] * sp, q.u]; });
+        for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+          const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]); if (d > R * .2) continue;
+          ctx.strokeStyle = `rgba(120,205,255,${.3 * (1 - d / (R * .2))})`; ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[j][0], pts[j][1]); ctx.stroke();
+        }
+        for (const [x, y, u] of pts) { ctx.fillStyle = `rgba(200,240,255,${.4 + .5 * Math.sin(Math.PI * u)})`; ctx.fillRect(x - 1, y - 1, 2.2, 2.2); }
+        ctx.drawImage(glow("120,210,255"), f.p[6] - 26, f.p[7] - 26, 52, 52);
+      }
+      const lim = R * .3;
+      for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+        const a = P[i], b = P[j], dx = a[0] - b[0], dy = a[1] - b[1]; if (Math.abs(dx) > lim || Math.abs(dy) > lim) continue;
+        const d = Math.hypot(dx, dy); if (d > lim) continue;
+        const depth = (a[2] + b[2]) / 2; ctx.strokeStyle = `rgba(140,210,255,${(1 - d / lim) * (.08 + .4 * depth)})`; ctx.lineWidth = .5 + depth * .6;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      }
+      for (const [x, y, d, k] of P) { const s = 1 + d * 2; ctx.fillStyle = `rgba(215,245,255,${.25 + .75 * d})`; ctx.fillRect(x - s / 2, y - s / 2, s, s); if (k > .85) { const g = 12 + d * 20; ctx.drawImage(glow("100,195,255"), x - g / 2, y - g / 2, g, g); } }
+      ctx.globalCompositeOperation = "source-over";
+      veil(S, .75);
+    },
+  };
+
+  // ───────── B3 · Nebula core ─────────
+  const nebula = {
+    init(S) {
+      const rnd = rng(77); makeBokeh(S, 50, 21);
+      S.shell = fib(900, rnd, .4);
+      S.clouds = Array.from({ length: 14 }, () => ({ a: rnd() * TAU, d: rnd() * .45, r: .35 + rnd() * .4, s: (rnd() - .5) * .3, c: rnd() < .5 ? "60,140,255" : "70,210,255", al: .08 + rnd() * .1 }));
+      S.flares = [0, 1, 2].map(() => rnd() * 900 | 0);
+      S.smoke = S.targets.map((t) => ({ p: axonPath(S, t, .9), offs: Array.from({ length: 14 }, () => [(rnd() - .5) * 2, rnd() * TAU, .3 + rnd() * .7]) }));
+    },
+    draw(S) {
+      const { ctx, cx, cy, R, t } = S;
+      background(S, "#0b2350");
+      ctx.globalCompositeOperation = "lighter";
+      // smoky filaments: many offset translucent strands
+      for (const s of S.smoke) {
+        for (const [o, ph, w] of s.offs) {
+          const p = s.p.slice(), wob = Math.sin(t * .7 + ph) * R * .05 * o;
+          p[3] += wob + o * R * .05; p[5] -= wob - o * R * .04;
+          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
+          ctx.strokeStyle = `rgba(80,180,255,${.05 * w})`; ctx.lineWidth = 6 * w; ctx.stroke();
+          ctx.strokeStyle = `rgba(170,230,255,${.12 * w})`; ctx.lineWidth = .8; ctx.stroke();
+        }
+        const [px, py] = bez(s.p, (t * .25) % 1); ctx.drawImage(glow("150,225,255"), px - 24, py - 24, 48, 48);
+        ctx.drawImage(glow("110,200,255"), s.p[6] - 30, s.p[7] - 30, 60, 60);
+      }
+      // gas core
+      for (const c of S.clouds) {
+        const a = c.a + t * c.s, x = cx + Math.cos(a) * c.d * R, y = cy + Math.sin(a) * c.d * R * .8, r = c.r * R;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${c.c},${c.al})`); g.addColorStop(1, `rgba(${c.c},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+      }
+      // particle shell
+      const rot = rotator(t * .09, .35);
+      S.shell.forEach((q, i) => {
+        const [x, y, z] = rot(q), d = (z + 1) / 2, px = cx + x * R, py = cy + y * R, tw = .5 + .5 * Math.sin(t * 2 + q[3] * 60);
+        ctx.fillStyle = `rgba(${120 + d * 80},${200 + d * 40},255,${(.08 + .55 * d) * tw})`; const s = .7 + d * 1.5; ctx.fillRect(px, py, s, s);
+        if (S.flares.includes(i) && d > .5) { // lens flare
+          const L = R * .35 * d; ctx.drawImage(glow("170,230,255"), px - 24, py - 24, 48, 48);
+          ctx.strokeStyle = `rgba(200,240,255,${.5 * d})`; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px - L, py); ctx.lineTo(px + L, py); ctx.moveTo(px, py - L * .6); ctx.lineTo(px, py + L * .6); ctx.stroke();
+        }
+      });
+      ctx.globalCompositeOperation = "source-over";
+      veil(S, .72);
+    },
+  };
+
+  // ───────── B4 · Holo shells ─────────
+  const holo = {
+    init(S) {
+      const rnd = rng(5); makeBokeh(S, 45, 31);
+      S.sats = Array.from({ length: 5 }, () => ({ r: 1.18 + rnd() * .18, s: .3 + rnd() * .4, ph: rnd() * TAU, tilt: (rnd() - .5) * 1.2 }));
+      S.beams = S.targets.map((t) => ({ p: axonPath(S, t, 1.02), parts: Array.from({ length: 24 }, () => rnd()) }));
+    },
+    draw(S) {
+      const { ctx, cx, cy, R, t } = S;
+      background(S, "#07224a");
+      ctx.globalCompositeOperation = "lighter";
+      for (const b of S.beams) {
+        ctx.beginPath(); ctx.moveTo(b.p[0], b.p[1]); ctx.bezierCurveTo(b.p[2], b.p[3], b.p[4], b.p[5], b.p[6], b.p[7]);
+        ctx.strokeStyle = "rgba(70,170,255,.12)"; ctx.lineWidth = 9; ctx.stroke();
+        ctx.strokeStyle = "rgba(160,225,255,.6)"; ctx.lineWidth = 1; ctx.setLineDash([10, 8]); ctx.lineDashOffset = -t * 40; ctx.stroke(); ctx.setLineDash([]);
+        b.parts.forEach((k) => { const [x, y] = bez(b.p, (k + t * .15) % 1); ctx.fillStyle = "rgba(200,240,255,.7)"; ctx.fillRect(x - 1, y - 1, 2, 2); });
+        ctx.drawImage(glow("120,210,255"), b.p[6] - 26, b.p[7] - 26, 52, 52);
+      }
+      // three nested globes, each a lat/long wireframe on its own axis
+      const shells = [[1, t * .15, .3, 10, 14], [.82, -t * .22, -.6, 7, 10], [.6, t * .35, 1.1, 5, 8]];
+      for (const [scale, ry, rx, lats, longs] of shells) {
+        const rot = rotator(ry, rx);
+        const line = (pts) => { for (let i = 1; i < pts.length; i++) { const a = rot(pts[i - 1]), b = rot(pts[i]), d = ((a[2] + b[2]) / 2 + 1) / 2;
+          ctx.strokeStyle = `rgba(110,200,255,${.04 + .38 * d * d})`; ctx.lineWidth = .6 + d * .6; ctx.beginPath(); ctx.moveTo(cx + a[0] * R * scale, cy + a[1] * R * scale); ctx.lineTo(cx + b[0] * R * scale, cy + b[1] * R * scale); ctx.stroke(); } };
+        for (let i = 1; i < lats; i++) { const phi = -Math.PI / 2 + (i / lats) * Math.PI, y = Math.sin(phi), r = Math.cos(phi); line(Array.from({ length: 49 }, (_, k) => [Math.cos(k / 48 * TAU) * r, y, Math.sin(k / 48 * TAU) * r])); }
+        for (let j = 0; j < longs; j++) { const th = (j / longs) * Math.PI; line(Array.from({ length: 33 }, (_, k) => { const phi = -Math.PI / 2 + k / 32 * Math.PI; return [Math.cos(phi) * Math.cos(th), Math.sin(phi), Math.cos(phi) * Math.sin(th)]; })); }
+        // glowing intersections on the front
+        for (let i = 1; i < lats; i += 2) for (let j = 0; j < longs * 2; j += 3) {
+          const phi = -Math.PI / 2 + (i / lats) * Math.PI, th = (j / (longs * 2)) * TAU;
+          const [x, y, z] = rot([Math.cos(phi) * Math.cos(th), Math.sin(phi), Math.cos(phi) * Math.sin(th)]); if (z < .2) continue;
+          const g = 8 + z * 12; ctx.drawImage(glow("130,210,255"), cx + x * R * scale - g / 2, cy + y * R * scale - g / 2, g, g);
+        }
+      }
+      // orbit ring and satellites
+      ctx.strokeStyle = "rgba(120,200,255,.25)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(cx, cy, R * 1.3, R * .32, -.25, 0, TAU); ctx.stroke();
+      for (const s of S.sats) { const a = s.ph + t * s.s, x = cx + Math.cos(a) * R * s.r, y = cy + Math.sin(a) * R * s.r * .28 + Math.cos(a) * R * s.tilt * .2;
+        ctx.drawImage(glow("160,225,255"), x - 12, y - 12, 24, 24); }
+      // scanline sweep
+      const sy = cy - R + ((t * .35) % 1) * R * 2, sg = ctx.createLinearGradient(0, sy - 30, 0, sy + 30);
+      sg.addColorStop(0, "rgba(100,200,255,0)"); sg.addColorStop(.5, "rgba(100,200,255,.12)"); sg.addColorStop(1, "rgba(100,200,255,0)");
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip(); ctx.fillStyle = sg; ctx.fillRect(cx - R, sy - 30, R * 2, 60); ctx.restore();
+      ctx.globalCompositeOperation = "source-over";
+      veil(S, .62);
+    },
+  };
+
+  // ───────── B5 · Dendritic plexus ─────────
+  const dendritic = {
+    init(S) {
+      const rnd = rng(91); makeBokeh(S, 80, 13);
+      S.v = fib(150, rnd, .3).map(([x, y, z, k]) => { const m = .88 + rnd() * .18; return [x * m, y * m, z * m, k]; });
+      S.e = neighbours(S.v, 4);
+      S.dots = Array.from({ length: 1200 }, () => { const u = rnd() * TAU, v = Math.acos(2 * rnd() - 1), d = .75 + rnd() * .22; return [Math.sin(v) * Math.cos(u) * d, Math.cos(v) * d, Math.sin(v) * Math.sin(u) * d, rnd()]; });
+      // tendrils: branching chains of mesh nodes on the free side of the neuron
+      const { cx, cy, R } = S, ax = S.targets.map((t) => Math.atan2(t.y - cy, t.x - cx));
+      S.tnodes = []; S.tlinks = [];
+      const grow = (x, y, a, len, depth) => {
+        let px = x, py = y; const start = S.tnodes.length;
+        for (let i = 0; i < 9; i++) { a += (rnd() - .5) * .5; px += Math.cos(a) * len / 9; py += Math.sin(a) * len / 9;
+          const sp = (1 - i / 9) * R * .05 + 2; S.tnodes.push([px + (rnd() - .5) * sp, py + (rnd() - .5) * sp, rnd(), depth]);
+          if (rnd() < .6) S.tnodes.push([px + (rnd() - .5) * sp * 2.5, py + (rnd() - .5) * sp * 2.5, rnd(), depth]); }
+        if (depth < 2) for (const d of [-1, 1]) grow(px, py, a + d * (.45 + rnd() * .4), len * .6, depth + 1);
+      };
+      for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + rnd() * .3; if (ax.some((b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) < .4)) continue; grow(cx + Math.cos(a) * R * .95, cy + Math.sin(a) * R * .95, a, R * (.6 + rnd() * .35), 0); }
+      S.tnodes.forEach((q, i) => S.tnodes.forEach((o, j) => { if (j > i && Math.hypot(q[0] - o[0], q[1] - o[1]) < R * .1) S.tlinks.push([i, j]); }));
+      S.strands = S.targets.map((t) => plexusStrand(S, axonPath(S, t), rnd, 30, .12));
+    },
+    draw(S) {
+      const { ctx, cx, cy, R, t } = S;
+      background(S, "#0a2c5c");
+      ctx.globalCompositeOperation = "lighter";
+      const sway = Math.sin(t * .6) * 1.5;
+      ctx.lineWidth = .7; ctx.strokeStyle = "rgba(120,200,255,.2)";
+      ctx.beginPath(); for (const [i, j] of S.tlinks) { const a = S.tnodes[i], b = S.tnodes[j]; ctx.moveTo(a[0] + sway * a[3], a[1]); ctx.lineTo(b[0] + sway * b[3], b[1]); } ctx.stroke();
+      for (const [x, y, k, d] of S.tnodes) { const tw = .5 + .5 * Math.sin(t * 2 + k * 40); ctx.fillStyle = `rgba(190,235,255,${(.25 + .5 * tw) * (1 - d * .25)})`; ctx.fillRect(x + sway * d - 1, y - 1, 2, 2); if (k > .9) ctx.drawImage(glow("100,195,255"), x + sway * d - 8, y - 8, 16, 16); }
+      S.strands.forEach((s, i) => drawStrand(S, s, i));
+      const rot = rotator(t * .1, .2 + Math.sin(t * .13) * .1);
+      const P = (q) => { const [x, y, z] = rot(q); return [cx + x * R, cy + y * R, (z + 1) / 2]; };
+      for (const q of S.dots) { const [x, y, d] = P(q); ctx.fillStyle = `rgba(110,200,255,${.05 + .3 * d})`; ctx.fillRect(x, y, 1 + d, 1 + d); }
+      const pv = S.v.map(P);
+      for (const [i, j] of S.e) { const a = pv[i], b = pv[j], d = (a[2] + b[2]) / 2; ctx.strokeStyle = `rgba(150,215,255,${.05 + .45 * d * d})`; ctx.lineWidth = .6 + d * .8; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      pv.forEach(([x, y, d], i) => { const k = S.v[i][3]; ctx.fillStyle = `rgba(225,247,255,${.2 + .8 * d})`; const s = 1 + d * 1.8; ctx.fillRect(x - s / 2, y - s / 2, s, s); if (k > .75 && d > .4) { const g = 12 + d * 20; ctx.drawImage(glow("110,200,255"), x - g / 2, y - g / 2, g, g); } });
+      const fl = ctx.createRadialGradient(cx, cy - R * .8, 0, cx, cy - R * .8, R * .8);
+      fl.addColorStop(0, "rgba(190,235,255,.35)"); fl.addColorStop(1, "rgba(80,170,255,0)"); ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(cx, cy - R * .8, R * .8, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+      veil(S, .78);
+    },
+  };
+
+  const V = { shell, living, nebula, holo, dendritic };
+  document.querySelectorAll(".stage").forEach((stage) => {
+    const v = V[stage.dataset.v];
+    const canvas = document.createElement("canvas"); stage.appendChild(canvas);
+    const box = document.createElement("div"); box.className = "content";
+    box.innerHTML = `<img class="avatar" src="../assets/photos/portrait.jpg" alt=""><p class="k">Input neuron</p><h3>Hi, I'm Matheus</h3><p class="s">Senior AI Engineer</p>`;
+    stage.appendChild(box);
+    const S = { ctx: canvas.getContext("2d"), t: 0, dt: 0 };
+    const labels = [["Start", "Career →"], ["Start", "Education →"], ["Start", "Skills →"]];
+    let visible = false;
+    new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(stage);
+    function size() {
+      const r = stage.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+      S.w = r.width; S.h = r.height; canvas.width = S.w * dpr; canvas.height = S.h * dpr; S.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      S.cx = S.w * .4; S.cy = S.h * .5; S.R = Math.min(S.h * .32, S.w * .2);
+      S.targets = [[.74, .2], [.79, .5], [.74, .8]].map(([x, y]) => ({ x: S.w * x, y: S.h * y }));
+      stage.style.setProperty("--cx", S.cx + "px"); stage.style.setProperty("--cy", S.cy + "px"); stage.style.setProperty("--R", S.R + "px");
+      stage.querySelectorAll(".pill").forEach((p) => p.remove());
+      S.targets.forEach((tg, i) => { const p = document.createElement("div"); p.className = "pill"; p.style.left = tg.x + 22 + "px"; p.style.top = tg.y + "px"; p.innerHTML = `<small>${labels[i][0]}</small>${labels[i][1]}`; stage.appendChild(p); });
+      v.init(S);
+    }
+    size(); new ResizeObserver(size).observe(stage);
+    let last = performance.now();
+    (function loop(now) { S.dt = Math.min(.05, (now - last) / 1000); last = now; if (visible) { S.t += S.dt; v.draw(S); } requestAnimationFrame(loop); })(last);
+  });
+})();
+</script>
+</body>
+</html>

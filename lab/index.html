@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design lab · neuron styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root { --ink: #e6eefc; --muted: #7688a8; --line: rgba(150,190,255,.14); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #03060f; color: var(--ink); font: 400 15px/1.55 "Geist", system-ui, sans-serif; }
+  header { max-width: 1200px; margin: 0 auto; padding: 40px 24px 8px; }
+  header h1 { margin: 0; font-weight: 500; font-size: 28px; letter-spacing: -.02em; }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  .variant { max-width: 1200px; margin: 28px auto 0; padding: 0 24px; }
+  .v-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+  .v-head b { font: 500 12px/1 "Geist Mono", monospace; letter-spacing: .1em; color: #4da3ff; border: 1px solid #4da3ff55; padding: 6px 8px; border-radius: 6px; }
+  .v-head h2 { margin: 0; font-size: 20px; font-weight: 500; }
+  .v-head span { color: var(--muted); font-size: 14px; }
+  .stage { position: relative; height: 560px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .content {
+    position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--R) * 1.35); transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .avatar { width: calc(var(--R) * .42); height: calc(var(--R) * .42); border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 14px; }
+  .k { font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: #4da3ff; margin: 0; }
+  .content h3 { margin: 8px 0 4px; font-size: calc(var(--R) * .13); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; }
+  .content p.s { margin: 0; color: #b4c2dc; font-size: 14px; }
+  .pill {
+    position: absolute; transform: translate(-100%, -50%); padding: 9px 13px; border-radius: 12px; font-size: 14px; white-space: nowrap;
+    background: rgba(7,13,30,.85); border: 1px solid #4da3ff66; backdrop-filter: blur(6px);
+  }
+  .pill small { display: block; font: 500 10px/1 "Geist Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #4da3ff; margin-bottom: 4px; }
+  .pill.l { transform: translate(0, -50%); }
+
+  /* A · organic */
+  .A .avatar { box-shadow: 0 0 0 2px #0a1630, 0 0 0 3px #4da3ffaa, 0 0 30px #4da3ff55; }
+  /* B · bioluminescent */
+  .B .content h3 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: calc(var(--R) * .17); letter-spacing: 0; }
+  .B .avatar { box-shadow: 0 0 0 1px #3fd3f2aa, 0 0 40px #3fd3f266; filter: saturate(.9); }
+  .B .k { color: #3fd3f2; }
+  .B .pill { border-color: #3fd3f255; border-radius: 999px; }
+  .B .pill small { color: #3fd3f2; }
+  /* C · blueprint */
+  .C .content h3 { font-family: "Geist Mono", monospace; font-size: calc(var(--R) * .105); letter-spacing: -.01em; }
+  .C .avatar { border-radius: 4px; box-shadow: 0 0 0 1px #6fb6ff, 6px 6px 0 -1px #061226, 6px 6px 0 0 #6fb6ff66; filter: grayscale(.35) contrast(1.05); }
+  .C .pill { border-radius: 2px; border-color: #6fb6ff88; background: #061226; font-family: "Geist Mono", monospace; font-size: 13px; }
+  footer { max-width: 1200px; margin: 40px auto 60px; padding: 0 24px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Design lab · three directions for the neurons</h1>
+  <p>Same content and flow, different art direction. Everything below is live and animated.</p>
+</header>
+
+<section class="variant B D">
+  <div class="v-head"><b>D</b><h2>Plexus (B, evolved)</h2><span>Low-poly wireframe neuron with glowing vertices and a dense inner mesh, plexus strands as synapses, bokeh depth of field.</span></div>
+  <div class="stage" data-v="plexus" style="height:640px"></div>
+</section>
+
+<section class="variant A">
+  <div class="v-head"><b>A</b><h2>Organic</h2><span>A real neuron: dendrites, a living membrane, myelinated axons with signals jumping between nodes.</span></div>
+  <div class="stage" data-v="organic"></div>
+</section>
+
+<section class="variant B">
+  <div class="v-head"><b>B</b><h2>Bioluminescent</h2><span>Deep-sea light: the neuron is a rotating cloud of glowing particles, connections are flowing filaments.</span></div>
+  <div class="stage" data-v="lumen"></div>
+</section>
+
+<section class="variant C">
+  <div class="v-head"><b>C</b><h2>Blueprint</h2><span>Engineering schematic: dial rings, PCB-style traces with printed weights, the neuron's own equation annotated.</span></div>
+  <div class="stage" data-v="blueprint"></div>
+</section>
+
+<footer>Pick one (or mix: e.g. A's neuron with C's annotations).</footer>
+
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const bez = (p, t) => { const u = 1 - t, a = u*u*u, b = 3*u*u*t, c = 3*u*t*t, d = t*t*t; return [a*p[0]+b*p[2]+c*p[4]+d*p[6], a*p[1]+b*p[3]+c*p[5]+d*p[7]]; };
+  const glowCache = {};
+  function glow(rgb) {
+    if (glowCache[rgb]) return glowCache[rgb];
+    const s = document.createElement("canvas"); s.width = s.height = 64;
+    const g = s.getContext("2d"), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.15, `rgba(${rgb},.95)`); r.addColorStop(.45, `rgba(${rgb},.22)`); r.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64); return (glowCache[rgb] = s);
+  }
+
+  // ───────── A · Organic ─────────
+  const organic = {
+    init(S) {
+      const rnd = rng(11), { cx, cy, R } = S;
+      S.segs = []; S.leaves = []; S.org = [];
+      const axAngles = S.targets.map((t) => Math.atan2(t.y - cy, t.x - cx));
+      const grow = (x, y, a, len, w, depth, path) => {
+        const steps = 7; let px = x, py = y;
+        for (let i = 0; i < steps; i++) {
+          a += (rnd() - .5) * .45;
+          const nx = px + Math.cos(a) * len / steps, ny = py + Math.sin(a) * len / steps;
+          const ww = w * (1 - i / steps * .45);
+          S.segs.push([px, py, nx, ny, ww]); path.push([nx, ny]); px = nx; py = ny;
+        }
+        if (depth < 3) {
+          const k = depth === 0 ? 3 : 2;
+          for (let j = 0; j < k; j++) grow(px, py, a + (j - (k - 1) / 2) * (.55 + rnd() * .35), len * (.6 + rnd() * .15), w * .55, depth + 1, path.slice());
+        } else S.leaves.push(path);
+      };
+      for (let i = 0; i < 11; i++) {
+        const a = (i / 11) * TAU + rnd() * .3;
+        if (axAngles.some((b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) < .32)) continue;
+        const x = cx + Math.cos(a) * R * .96, y = cy + Math.sin(a) * R * .96;
+        grow(x, y, a, R * (.45 + rnd() * .25), R * .085, 0, [[x, y]]);
+      }
+      for (let i = 0; i < 26; i++) { const a = rnd() * TAU, d = Math.sqrt(rnd()) * R * .8; S.org.push([Math.cos(a) * d, Math.sin(a) * d, 2 + rnd() * R * .03, rnd() * TAU]); }
+      S.pulses = [];
+      S.axons = S.targets.map((t, i) => {
+        const a = axAngles[i], x0 = cx + Math.cos(a) * R, y0 = cy + Math.sin(a) * R;
+        return [x0, y0, x0 + Math.cos(a) * R * .5, y0 + Math.sin(a) * R * .5, t.x - (t.x - x0) * .3, t.y, t.x, t.y];
+      });
+    },
+    draw(S) {
+      const { ctx, w, h, cx, cy, R, t } = S;
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .8);
+      bg.addColorStop(0, "#0b1a38"); bg.addColorStop(.5, "#060e22"); bg.addColorStop(1, "#02050d");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+
+      // dendrites
+      ctx.lineCap = "round";
+      for (const pass of [0, 1]) for (const [x1, y1, x2, y2, ww] of S.segs) {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.lineWidth = pass ? ww : ww * 3.2;
+        ctx.strokeStyle = pass ? `rgba(120,180,255,${.25 + ww / (R * .085) * .55})` : "rgba(77,163,255,.05)";
+        ctx.stroke();
+      }
+      // signals travelling inward along dendrites
+      if (Math.random() < .12) S.pulses.push({ p: S.leaves[(Math.random() * S.leaves.length) | 0], k: 0 });
+      ctx.globalCompositeOperation = "lighter";
+      S.pulses = S.pulses.filter((q) => {
+        q.k += S.dt * .55; if (q.k >= 1) return false;
+        const p = q.p, f = (1 - q.k) * (p.length - 1), i = Math.floor(f), r = f - i;
+        const a = p[i], b = p[Math.min(i + 1, p.length - 1)];
+        const x = a[0] + (b[0] - a[0]) * r, y = a[1] + (b[1] - a[1]) * r;
+        ctx.drawImage(glow("110,190,255"), x - 9, y - 9, 18, 18); return true;
+      });
+      ctx.globalCompositeOperation = "source-over";
+
+      // axons with myelin sheaths and saltatory pulses
+      S.axons.forEach((p, i) => {
+        ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.bezierCurveTo(p[2], p[3], p[4], p[5], p[6], p[7]);
+        ctx.lineWidth = R * .075; ctx.strokeStyle = "rgba(90,150,240,.28)"; ctx.setLineDash([R * .16, R * .045]); ctx.stroke();
+        ctx.lineWidth = R * .04; ctx.strokeStyle = "rgba(150,200,255,.25)"; ctx.stroke();
+        ctx.setLineDash([]); ctx.lineWidth = 1.4; ctx.strokeStyle = "rgba(170,215,255,.55)"; ctx.stroke();
+        // node-to-node jump
+        const k = ((t * .5 + i * .37) % 1), q = Math.floor(k * 9) / 9;
+        const [x, y] = bez(p, q);
+        ctx.globalCompositeOperation = "lighter";
+        ctx.drawImage(glow("140,205,255"), x - 16, y - 16, 32, 32);
+        ctx.globalCompositeOperation = "source-over";
+        // synaptic bouton
+        const bx = p[6], by = p[7], br = R * .085;
+        const g = ctx.createRadialGradient(bx - br * .3, by - br * .3, 1, bx, by, br);
+        g.addColorStop(0, "rgba(150,205,255,.7)"); g.addColorStop(1, "rgba(30,70,140,.5)");
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fillStyle = g; ctx.fill();
+        for (let v = 0; v < 5; v++) { ctx.beginPath(); ctx.arc(bx + Math.cos(v * 1.3 + t) * br * .45, by + Math.sin(v * 1.9 + t) * br * .45, 2, 0, TAU); ctx.fillStyle = "rgba(220,240,255,.7)"; ctx.fill(); }
+      });
+
+      // soma with a living membrane
+      ctx.beginPath();
+      for (let i = 0; i <= 160; i++) {
+        const a = (i / 160) * TAU;
+        const r = R * (1 + .022 * Math.sin(3 * a + t * .8) + .015 * Math.sin(5 * a - t * 1.1) + .008 * Math.sin(11 * a + t * 1.7));
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      const sg = ctx.createRadialGradient(cx - R * .25, cy - R * .3, R * .05, cx, cy, R * 1.05);
+      sg.addColorStop(0, "rgba(70,130,230,.42)"); sg.addColorStop(.55, "rgba(10,24,56,.94)"); sg.addColorStop(1, "rgba(6,14,34,.98)");
+      ctx.fillStyle = sg; ctx.fill();
+      ctx.lineWidth = 10; ctx.strokeStyle = "rgba(90,160,255,.07)"; ctx.stroke();
+      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(140,195,255,.65)"; ctx.stroke();
+      // organelles
+      for (const [ox, oy, r, ph] of S.org) {
+        ctx.beginPath(); ctx.ellipse(cx + ox + Math.sin(t * .3 + ph) * 3, cy + oy + Math.cos(t * .25 + ph) * 3, r * 1.6, r, ph, 0, TAU);
+        ctx.fillStyle = "rgba(120,180,255,.06)"; ctx.fill();
+      }
+    },
+  };
+
+  // ───────── B · Bioluminescent ─────────
+  const lumen = {
+    init(S) {
+      const rnd = rng(5), N = 1300;
+      S.pts = [];
+      for (let i = 0; i < N; i++) {
+        const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963;
+        S.pts.push([Math.cos(th) * r, y, Math.sin(th) * r, rnd()]);
+      }
+      for (let i = 0; i < 350; i++) { const u = rnd() * TAU, v = Math.acos(2 * rnd() - 1), d = Math.cbrt(rnd()) * .9; S.pts.push([Math.sin(v) * Math.cos(u) * d, Math.cos(v) * d, Math.sin(v) * Math.sin(u) * d, rnd()]); }
+      S.plankton = Array.from({ length: 140 }, () => [rnd() * S.w, rnd() * S.h, .2 + rnd() * .8, rnd() * TAU]);
+      S.streams = S.targets.map((t) => {
+        const a = Math.atan2(t.y - S.cy, t.x - S.cx), x0 = S.cx + Math.cos(a) * S.R * 1.02, y0 = S.cy + Math.sin(a) * S.R * 1.02;
+        return { p: [x0, y0, x0 + Math.cos(a) * S.R * .6, y0 + Math.sin(a) * S.R * .6, t.x - (t.x - x0) * .35, t.y, t.x, t.y],
+          parts: Array.from({ length: 110 }, () => [rnd(), (rnd() - .5) * 2, rnd() * TAU, .15 + rnd() * .2]) };
+      });
+    },
+    draw(S) {
+      const { ctx, w, h, cx, cy, R, t } = S;
+      ctx.fillStyle = "#02040b"; ctx.fillRect(0, 0, w, h);
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 3);
+      bg.addColorStop(0, "rgba(20,70,120,.35)"); bg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "lighter";
+      for (const p of S.plankton) {
+        p[0] += Math.cos(p[3] + t * .2) * .15; p[1] -= .08 * p[2];
+        if (p[1] < 0) p[1] = h;
+        ctx.fillStyle = `rgba(90,200,255,${.12 + .25 * p[2] * (.5 + .5 * Math.sin(t * 2 + p[3]))})`;
+        ctx.fillRect(p[0], p[1], 1.4, 1.4);
+      }
+      // filaments
+      for (const s of S.streams) {
+        ctx.beginPath(); ctx.moveTo(s.p[0], s.p[1]); ctx.bezierCurveTo(s.p[2], s.p[3], s.p[4], s.p[5], s.p[6], s.p[7]);
+        ctx.strokeStyle = "rgba(63,211,242,.18)"; ctx.lineWidth = 1; ctx.stroke();
+        for (const q of s.parts) {
+          const u = (q[0] + t * q[3]) % 1;
+          const [x, y] = bez(s.p, u), [x2, y2] = bez(s.p, Math.min(1, u + .01));
+          const dx = x2 - x, dy = y2 - y, L = Math.hypot(dx, dy) || 1;
+          const off = (Math.sin(u * 14 + q[2] + t) * .5 + q[1] * .5) * R * .06 * Math.sin(Math.PI * u);
+          const px = x - dy / L * off, py = y + dx / L * off;
+          const a = Math.sin(Math.PI * u);
+          ctx.fillStyle = `rgba(110,225,255,${.55 * a})`;
+          ctx.fillRect(px, py, 1.8, 1.8);
+        }
+        const [ex, ey] = [s.p[6], s.p[7]];
+        ctx.drawImage(glow("63,211,242"), ex - 22, ey - 22, 44, 44);
+      }
+      // particle sphere
+      const ry = t * .18, rx = .35 + Math.sin(t * .2) * .1;
+      const cyr = Math.cos(ry), syr = Math.sin(ry), cxr = Math.cos(rx), sxr = Math.sin(rx);
+      for (const [x, y, z, k] of S.pts) {
+        const x1 = x * cyr + z * syr, z1 = -x * syr + z * cyr;
+        const y1 = y * cxr - z1 * sxr, z2 = y * sxr + z1 * cxr;
+        const breath = 1 + .015 * Math.sin(t * 1.4 + k * 6);
+        const px = cx + x1 * R * breath, py = cy + y1 * R * breath;
+        const d = (z2 + 1) / 2, tw = .6 + .4 * Math.sin(t * 3 + k * 40);
+        ctx.fillStyle = k > .93 ? `rgba(200,245,255,${.9 * d * tw})` : `rgba(${60 + d * 60},${170 + d * 50},255,${(.12 + .55 * d) * tw})`;
+        const s = .7 + d * 1.5; ctx.fillRect(px, py, s, s);
+      }
+      ctx.globalCompositeOperation = "source-over";
+      const veil = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * .82);
+      veil.addColorStop(0, "rgba(2,6,16,.82)"); veil.addColorStop(.75, "rgba(2,6,16,.6)"); veil.addColorStop(1, "rgba(2,6,16,0)");
+      ctx.fillStyle = veil; ctx.beginPath(); ctx.arc(cx, cy, R * .85, 0, TAU); ctx.fill();
+    },
+  };
+
+  // ───────── C · Blueprint ─────────
+  const blueprint = {
+    init(S) {
+      const { cx, cy, R } = S;
+      S.traces = S.targets.map((tg, i) => {
+        const a = Math.atan2(tg.y - cy, tg.x - cx), dir = Math.sign(tg.x - cx) || 1;
+        const x0 = cx + Math.cos(a) * R * 1.0, y0 = cy + Math.sin(a) * R * 1.0;
+        const x1 = cx + dir * R * 1.32, y1 = y0;
+        const dy = tg.y - y1, x2 = x1 + dir * Math.abs(dy), y2 = tg.y;
+        return { pts: [[x0, y0], [x1, y1], [x2, y2], [tg.x, tg.y]], w: [.92, 1.0, .74][i % 3] };
+      });
+      S.label = " NEURON 00 · INPUT LAYER · MATHEUS BUENO DE OLIVEIRA · SENIOR AI ENGINEER · v2026 ·";
+    },
+    draw(S) {
+      const { ctx, w, h, cx, cy, R, t } = S;
+      ctx.fillStyle = "#061226"; ctx.fillRect(0, 0, w, h);
+      for (let x = 0; x < w; x += 16) { ctx.fillStyle = x % 80 ? "rgba(80,140,255,.05)" : "rgba(80,140,255,.12)"; ctx.fillRect(x, 0, 1, h); }
+      for (let y = 0; y < h; y += 16) { ctx.fillStyle = y % 80 ? "rgba(80,140,255,.05)" : "rgba(80,140,255,.12)"; ctx.fillRect(0, y, w, 1); }
+      ctx.font = "10px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(111,182,255,.35)";
+      for (let x = 80; x < w; x += 160) ctx.fillText(String(x).padStart(4, "0"), x + 3, 12);
+      for (let y = 80; y < h; y += 160) ctx.fillText(String(y).padStart(4, "0"), 4, y - 3);
+
+      // traces
+      for (const tr of S.traces) {
+        const p = tr.pts;
+        ctx.beginPath(); p.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.strokeStyle = "rgba(111,182,255,.85)"; ctx.lineWidth = 1.6; ctx.stroke();
+        ctx.strokeStyle = "rgba(111,182,255,.12)"; ctx.lineWidth = 7; ctx.stroke();
+        for (const [x, y] of [p[1], p[2]]) { ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fillStyle = "#061226"; ctx.fill(); ctx.strokeStyle = "#6fb6ff"; ctx.lineWidth = 1.4; ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 1.6, 0, TAU); ctx.fillStyle = "#6fb6ff"; ctx.fill(); }
+        const mx = (p[2][0] + p[3][0]) / 2, my = p[3][1];
+        ctx.font = "11px 'Geist Mono', monospace"; ctx.fillStyle = "#9fd0ff"; ctx.textAlign = "center";
+        ctx.fillText(`w = ${tr.w.toFixed(2)}`, mx, my - 9);
+        // packet
+        const L = p.slice(1).map((q, i) => Math.hypot(q[0] - p[i][0], q[1] - p[i][1])), tot = L.reduce((a, b) => a + b, 0);
+        let d = ((t * 140 + tr.w * 300) % tot);
+        for (let i = 0; i < L.length; i++) {
+          if (d <= L[i]) { const k = d / L[i], x = p[i][0] + (p[i + 1][0] - p[i][0]) * k, y = p[i][1] + (p[i + 1][1] - p[i][1]) * k;
+            ctx.fillStyle = "#cfe8ff"; ctx.fillRect(x - 3, y - 3, 6, 6); ctx.globalCompositeOperation = "lighter"; ctx.drawImage(glow("111,182,255"), x - 14, y - 14, 28, 28); ctx.globalCompositeOperation = "source-over"; break; }
+          d -= L[i];
+        }
+      }
+      ctx.textAlign = "left";
+
+      // dial rings
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = "rgba(6,18,38,.94)"; ctx.fill();
+      ctx.strokeStyle = "#6fb6ff"; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R * .94, 0, TAU); ctx.strokeStyle = "rgba(111,182,255,.25)"; ctx.lineWidth = 1; ctx.setLineDash([2, 4]); ctx.stroke(); ctx.setLineDash([]);
+      const rot = t * .05;
+      for (let i = 0; i < 180; i++) {
+        const a = rot + (i / 180) * TAU, long = i % 15 === 0, r1 = R * 1.04, r2 = R * (long ? 1.1 : 1.065);
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+        ctx.strokeStyle = long ? "rgba(159,208,255,.9)" : "rgba(111,182,255,.4)"; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // text on arc
+      ctx.font = "500 11px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(159,208,255,.8)";
+      const rr = R * 1.17, chars = S.label.split(""), step = 8.2 / rr;
+      chars.forEach((ch, i) => {
+        const a = -rot * 1.6 + i * step - Math.PI / 2;
+        ctx.save(); ctx.translate(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); ctx.rotate(a + Math.PI / 2); ctx.fillText(ch, -3, 0); ctx.restore();
+      });
+      // crosshair
+      ctx.strokeStyle = "rgba(111,182,255,.5)"; ctx.lineWidth = 1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.beginPath(); ctx.moveTo(cx + dx * R * 1.26, cy + dy * R * 1.26); ctx.lineTo(cx + dx * R * 1.4, cy + dy * R * 1.4); ctx.stroke(); }
+      // annotation: the neuron's equation
+      const ax = cx - R * .72, ay = cy - R * .72, lx = cx - R * 1.45, ly = cy - R * 1.05;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(lx + 110, ly); ctx.lineTo(lx - 8, ly); ctx.strokeStyle = "rgba(159,208,255,.6)"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(ax, ay, 3, 0, TAU); ctx.fillStyle = "#9fd0ff"; ctx.fill();
+      ctx.font = "13px 'Geist Mono', monospace"; ctx.fillStyle = "#cfe8ff"; ctx.fillText("a = σ( Σ wᵢxᵢ + b )", lx - 8, ly - 8);
+      ctx.font = "10px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(159,208,255,.6)"; ctx.fillText("FIG. 01 — INPUT NEURON", lx - 8, ly + 14);
+    },
+  };
+
+  // ───────── D · Plexus ─────────
+  const plexus = {
+    init(S) {
+      const rnd = rng(23), { w, h, cx, cy, R } = S;
+      // wireframe shell: irregular sphere, edges between near neighbours
+      const NV = 170;
+      S.v = [];
+      for (let i = 0; i < NV; i++) {
+        const y = 1 - (i / (NV - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963 + rnd() * .25;
+        const k = .9 + rnd() * .16;
+        S.v.push([Math.cos(th) * r * k, y * k * .96, Math.sin(th) * r * k, rnd()]);
+      }
+      S.e = [];
+      for (let i = 0; i < NV; i++) {
+        const d = S.v.map((q, j) => [j, (q[0] - S.v[i][0]) ** 2 + (q[1] - S.v[i][1]) ** 2 + (q[2] - S.v[i][2]) ** 2]).sort((a, b) => a[1] - b[1]);
+        for (let n = 1; n <= 4; n++) { const j = d[n][0]; if (j > i || !S.e.some(([a, b]) => a === j && b === i)) S.e.push([i, j]); }
+      }
+      // dense inner texture: points hugging the shell and filling the volume
+      S.dots = [];
+      for (let i = 0; i < 1800; i++) {
+        const u = rnd() * TAU, vv = Math.acos(2 * rnd() - 1), d = i < 1100 ? .82 + rnd() * .16 : Math.cbrt(rnd()) * .8;
+        S.dots.push([Math.sin(vv) * Math.cos(u) * d, Math.cos(vv) * d, Math.sin(vv) * Math.sin(u) * d, rnd()]);
+      }
+      // bokeh: soft out-of-focus lights at several depths
+      S.bokeh = Array.from({ length: 70 }, () => ({ x: rnd() * w, y: rnd() * h, r: 2 + Math.pow(rnd(), 2.2) * 46, a: .05 + rnd() * .22, z: .2 + rnd(), ph: rnd() * TAU }));
+      S.bok = {};
+      // plexus strands towards each synapse
+      S.strands = S.targets.map((t) => {
+        const a = Math.atan2(t.y - cy, t.x - cx), x0 = cx + Math.cos(a) * R * .98, y0 = cy + Math.sin(a) * R * .98;
+        const p = [x0, y0, x0 + Math.cos(a) * R * .55, y0 + Math.sin(a) * R * .55, t.x - (t.x - x0) * .35, t.y, t.x, t.y];
+        const nodes = [];
+        for (let i = 0; i <= 26; i++) {
+          const u = i / 26, [x, y] = bez(p, u), spread = Math.sin(Math.PI * u) * R * .1 + 2;
+          nodes.push([x + (rnd() - .5) * spread * 2, y + (rnd() - .5) * spread * 2, rnd()]);
+          if (i % 2 && i < 26) { const [x2, y2] = bez(p, u + .02); nodes.push([x2 + (rnd() - .5) * spread * 2.4, y2 + (rnd() - .5) * spread * 2.4, rnd()]); }
+        }
+        const links = [];
+        nodes.forEach((q, i) => nodes.forEach((o, j) => { if (j > i && Math.hypot(q[0] - o[0], q[1] - o[1]) < R * .16) links.push([i, j]); }));
+        return { p, nodes, links };
+      });
+    },
+    draw(S) {
+      const { ctx, w, h, cx, cy, R, t } = S;
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .9);
+      bg.addColorStop(0, "#0a2a55"); bg.addColorStop(.45, "#061633"); bg.addColorStop(1, "#020610");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+
+      // bokeh
+      ctx.globalCompositeOperation = "lighter";
+      for (const b of S.bokeh) {
+        const x = b.x + Math.sin(t * .1 * b.z + b.ph) * 14 * b.z, y = b.y + Math.cos(t * .08 * b.z + b.ph) * 10 * b.z;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+        g.addColorStop(0, `rgba(80,170,255,${b.a})`); g.addColorStop(.7, `rgba(60,150,255,${b.a * .7})`); g.addColorStop(1, "rgba(60,150,255,0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
+      }
+
+      // strands
+      for (const s of S.strands) {
+        ctx.lineWidth = .8;
+        for (const [i, j] of s.links) {
+          const a = s.nodes[i], b = s.nodes[j];
+          ctx.strokeStyle = "rgba(120,200,255,.22)"; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+        }
+        for (const [x, y, k] of s.nodes) {
+          const tw = .5 + .5 * Math.sin(t * 2.2 + k * 30);
+          ctx.fillStyle = `rgba(190,235,255,${.35 + .5 * tw})`; ctx.fillRect(x - 1, y - 1, 2, 2);
+          if (k > .82) ctx.drawImage(glow("90,190,255"), x - 9, y - 9, 18, 18);
+        }
+        const u = (t * .32 + s.p[7] / h) % 1, [px, py] = bez(s.p, u);
+        ctx.drawImage(glow("140,220,255"), px - 20, py - 20, 40, 40);
+        ctx.drawImage(glow("120,210,255"), s.p[6] - 26, s.p[7] - 26, 52, 52);
+      }
+
+      // rotate the shell
+      const ry = t * .12, rx = .25 + Math.sin(t * .15) * .08;
+      const c1 = Math.cos(ry), s1 = Math.sin(ry), c2 = Math.cos(rx), s2 = Math.sin(rx);
+      const P = (q) => {
+        const x1 = q[0] * c1 + q[2] * s1, z1 = -q[0] * s1 + q[2] * c1;
+        const y1 = q[1] * c2 - z1 * s2, z2 = q[1] * s2 + z1 * c2;
+        return [cx + x1 * R, cy + y1 * R, (z2 + 1) / 2];
+      };
+      const pv = S.v.map(P);
+
+      // inner dots
+      for (const q of S.dots) {
+        const [x, y, d] = P(q), tw = .6 + .4 * Math.sin(t * 2.5 + q[3] * 50);
+        ctx.fillStyle = `rgba(${90 + d * 80},${180 + d * 50},255,${(.06 + .3 * d) * tw})`;
+        const s = .6 + d * 1.1; ctx.fillRect(x, y, s, s);
+      }
+      // wireframe
+      for (const [i, j] of S.e) {
+        const a = pv[i], b = pv[j], d = (a[2] + b[2]) / 2;
+        ctx.strokeStyle = `rgba(150,215,255,${.05 + .42 * d * d})`; ctx.lineWidth = .6 + d * .7;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      }
+      // vertices
+      pv.forEach(([x, y, d], i) => {
+        const k = S.v[i][3], tw = .55 + .45 * Math.sin(t * 1.8 + k * 40);
+        ctx.fillStyle = `rgba(220,245,255,${(.2 + .8 * d) * tw})`;
+        const s = 1 + d * 1.6; ctx.fillRect(x - s / 2, y - s / 2, s, s);
+        if (k > .8 && d > .45) { const g = 10 + d * 18; ctx.drawImage(glow("110,200,255"), x - g / 2, y - g / 2, g, g); }
+      });
+      // rim light
+      const fl = ctx.createRadialGradient(cx - R * .1, cy - R * .85, 0, cx - R * .1, cy - R * .85, R * .7);
+      fl.addColorStop(0, "rgba(180,230,255,.35)"); fl.addColorStop(1, "rgba(80,170,255,0)");
+      ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(cx - R * .1, cy - R * .85, R * .7, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+
+      const veil = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * .78);
+      veil.addColorStop(0, "rgba(3,10,26,.8)"); veil.addColorStop(.7, "rgba(3,10,26,.55)"); veil.addColorStop(1, "rgba(3,10,26,0)");
+      ctx.fillStyle = veil; ctx.beginPath(); ctx.arc(cx, cy, R * .8, 0, TAU); ctx.fill();
+    },
+  };
+
+  const V = { organic, lumen, blueprint, plexus };
+  const content = {
+    organic: { k: "Input neuron", t: "Hi, I'm Matheus", s: "Senior AI Engineer" },
+    lumen: { k: "Input neuron", t: "Hi, I'm Matheus", s: "Senior AI Engineer" },
+    plexus: { k: "Input neuron", t: "Hi, I'm Matheus", s: "Senior AI Engineer" },
+    blueprint: { k: "N-00 · input", t: "Matheus Bueno\nde Oliveira", s: "Senior AI Engineer" },
+  };
+
+  document.querySelectorAll(".stage").forEach((stage) => {
+    const v = V[stage.dataset.v], c = content[stage.dataset.v];
+    const canvas = document.createElement("canvas"); stage.appendChild(canvas);
+    const box = document.createElement("div"); box.className = "content";
+    box.innerHTML = `<img class="avatar" src="../assets/photos/portrait.jpg" alt=""><p class="k">${c.k}</p><h3>${c.t.replace("\n", "<br>")}</h3><p class="s">${c.s}</p>`;
+    stage.appendChild(box);
+    const S = { ctx: canvas.getContext("2d"), t: 0, dt: 0 };
+    const pills = [["Start", "Career →"], ["Start", "Education →"], ["Start", "Skills →"]];
+    function size() {
+      const r = stage.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+      S.w = r.width; S.h = r.height; canvas.width = S.w * dpr; canvas.height = S.h * dpr; S.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      S.cx = S.w * .4; S.cy = S.h * .5; S.R = Math.min(S.h * .34, S.w * .2);
+      S.targets = [[.74, .2], [.79, .5], [.74, .8]].map(([x, y]) => ({ x: S.w * x, y: S.h * y }));
+      stage.style.setProperty("--cx", S.cx + "px"); stage.style.setProperty("--cy", S.cy + "px"); stage.style.setProperty("--R", S.R + "px");
+      stage.querySelectorAll(".pill").forEach((p) => p.remove());
+      S.targets.forEach((tg, i) => { const p = document.createElement("div"); p.className = "pill l"; p.style.left = tg.x + 18 + "px"; p.style.top = tg.y + "px"; p.innerHTML = `<small>${pills[i][0]}</small>${pills[i][1]}`; stage.appendChild(p); });
+      v.init(S);
+    }
+    size(); new ResizeObserver(size).observe(stage);
+    let last = performance.now();
+    (function loop(now) { S.dt = Math.min(.05, (now - last) / 1000); last = now; S.t += S.dt; v.draw(S); requestAnimationFrame(loop); })(last);
+  });
+})();
+</script>
+</body>
+</html>

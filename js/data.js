@@ -42,6 +42,7 @@ window.SITE = {
 
   neurons: {
     hello: {
+      photo: { src: "assets/photos/portrait.jpg", kind: "avatar", alt: { en: "Portrait of Matheus", pt: "Retrato do Matheus" } },
       short: { en: "Hello", pt: "Olá" },
       kicker: { en: "Input neuron", pt: "Neurônio de entrada" },
       title: { en: "Hi, I'm Matheus", pt: "Oi, eu sou o Matheus" },
@@ -74,6 +75,7 @@ window.SITE = {
       },
     },
     dellint: {
+      photo: { src: "assets/photos/dell.jpg", kind: "wide", alt: { en: "Dell Technologies mug and Matheus's employee badge on a desk", pt: "Caneca da Dell Technologies e o crachá do Matheus numa mesa" } },
       short: { en: "Dell · Intern", pt: "Dell · Estágio" },
       title: { en: "Software Engineering Intern", pt: "Estagiário de Engenharia de Software" },
       org: { en: "Dell Technologies · Dell IT Academy", pt: "Dell Technologies · Dell IT Academy" },
@@ -189,6 +191,7 @@ window.SITE = {
       },
     },
     awards: {
+      photo: { src: "assets/photos/speech.jpg", kind: "avatar", alt: { en: "Matheus giving a speech at a microphone", pt: "Matheus discursando ao microfone" } },
       short: { en: "Awards", pt: "Prêmios" },
       title: { en: "Hackathon & Academic Merit", pt: "Hackathon & Mérito Acadêmico" },
       org: { en: "IFSUL", pt: "IFSUL" },
