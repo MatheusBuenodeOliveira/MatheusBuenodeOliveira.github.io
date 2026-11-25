@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Matheus Bueno de Oliveira · Senior AI Engineer</title>
+  <meta name="description" content="Matheus Bueno de Oliveira, Senior AI Engineer. LLM-powered systems, Agentic AI and cloud data platforms. An interactive neural network of my career." />
+  <meta name="theme-color" content="#06070b" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Matheus Bueno de Oliveira · Senior AI Engineer" />
+  <meta property="og:description" content="My career as a neural network. Hover the neurons, run the forward pass." />
+  <meta property="og:url" content="https://matheusbuenodeoliveira.github.io/" />
+  <meta property="og:image" content="https://matheusbuenodeoliveira.github.io/assets/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#model-card" data-i18n="readAsText">Read as text ↓</a>
+
+  <header class="top">
+    <div class="id">
+      <h1 class="name">Matheus Bueno de Oliveira</h1>
+      <p class="tagline" data-i18n="tagline"></p>
+    </div>
+    <nav class="top-actions">
+      <a class="chip" href="#model-card" data-i18n="modelCard">Model card</a>
+      <button class="chip lang" id="langBtn" type="button" aria-live="polite">
+        <span data-l="en">EN</span><span class="sep">/</span><span data-l="pt">PT</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="stage" id="stage" aria-label="Interactive neural network">
+      <div class="net" id="net">
+        <canvas id="wires" aria-hidden="true"></canvas>
+        <div class="layer-labels" id="layerLabels" aria-hidden="true"></div>
+        <div class="neurons" id="neurons" role="list"></div>
+      </div>
+
+      <div class="console">
+        <button class="play" id="playBtn" type="button">
+          <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+          <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/></svg>
+          <span id="playLabel"></span>
+        </button>
+        <div class="timeline">
+          <div class="ticks" id="ticks" aria-hidden="true"></div>
+          <input type="range" id="scrub" min="0" max="1000" value="1000" step="1" />
+          <div class="readout"><span class="mono" data-i18n="epoch">epoch</span> <output id="epochOut" class="mono"></output></div>
+        </div>
+        <p class="ticker" id="ticker" aria-live="polite"></p>
+        <p class="hint" id="hint"></p>
+      </div>
+    </section>
+
+    <section class="card" id="model-card" aria-labelledby="mc-title">
+      <div class="card-inner" id="cardInner"></div>
+    </section>
+  </main>
+
+  <aside class="panel" id="panel" aria-hidden="true" aria-labelledby="p-title" role="dialog">
+    <div class="panel-head">
+      <span class="layer-tag mono" id="pLayer"></span>
+      <div class="panel-nav">
+        <button type="button" id="pPrev" class="icon-btn" aria-label="Previous">←</button>
+        <button type="button" id="pNext" class="icon-btn" aria-label="Next">→</button>
+        <button type="button" id="pClose" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+    </div>
+    <div class="panel-body" id="pBody"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
