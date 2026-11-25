@@ -91,7 +91,29 @@ html[lang="en"] .lang [data-l="en"], html[lang="pt-BR"] .lang [data-l="pt"] { co
   container-type: inline-size;
   --tc-a: color-mix(in srgb, var(--tc) 22%, transparent);
 }
-body.mode-focus .soma { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+body.mode-focus .soma {
+  opacity: 1; pointer-events: auto;
+  /* the text is pinned to the sphere: it pivots around the sphere's centre, behind the page */
+  transform: translate(calc(-50% + var(--px, 0px)), calc(-50% + var(--py, 0px))) perspective(1600px) rotateX(var(--rx, 0rad)) rotateY(var(--ry, 0rad));
+}
+.soma { transform-origin: 50% 50% calc(var(--orbR, 300px) * -1); backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: grab; }
+.soma a, .soma img { -webkit-user-drag: none; }
+body.mode-focus .soma.spun, body.rotating .soma, body.panning .soma { transition: opacity .3s var(--ease); }
+body.rotating, body.rotating * { cursor: grabbing !important; user-select: none; }
+body.mode-focus #sky { cursor: grab; }
+body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
+body.panning .soma { opacity: .45; }
+body.panning .syn { opacity: .45; }
+body.panning .syn.aim { opacity: 1; border-color: var(--sc); box-shadow: 0 0 0 1px var(--sc), 0 0 46px color-mix(in srgb, var(--sc) 45%, transparent); }
+html, body { touch-action: none; }
+.soma-scroll { touch-action: pan-y; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(6px + env(safe-area-inset-bottom)); z-index: 40; width: max-content; max-width: calc(100vw - 32px);
+  transform: translate(-50%, 8px); opacity: 0; transition: opacity .4s, transform .4s var(--ease); pointer-events: none;
+  padding: 10px 14px; border-radius: 14px; font-size: 13px; color: var(--ink); text-align: center;
+  background: rgba(6, 14, 32, .94); border: 1px solid rgba(120, 190, 255, .3); box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
 .soma::before { /* dark veil so text reads over the plexus */
   content: ""; position: absolute; inset: -4%; border-radius: inherit;
   background: radial-gradient(closest-side, rgba(3, 10, 26, .84), rgba(3, 10, 26, .62) 62%, rgba(3, 10, 26, 0));
@@ -270,13 +292,15 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
   .soma-scroll { inset: 16% 9% 14%; }
   .keys, .minimap { display: none; }
   .hud-bottom { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); justify-content: center; }
+  /* a fixed two-column grid: boxes never shrink below half the width (Safari-safe) */
   .syn-row {
-    position: absolute; left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 12px;
+    position: absolute; left: 0; right: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 12px;
     pointer-events: none;
   }
-  .syn-row .syn { position: relative; flex: 0 1 auto; min-width: 0; max-width: calc(50% - 4px); padding: 6px 12px 6px 6px; gap: 8px; transform: none !important; text-align: left !important; flex-direction: row !important; }
-  .syn-row .s-k { font-size: 9px; letter-spacing: .08em; }
-  .syn-row .s-t { font-size: 13px; overflow-wrap: anywhere; }
+  .syn-row > .syn:only-child, .syn-row > .syn:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 4px); }
+  .syn-row .syn { position: relative; min-width: 0; max-width: none; width: 100%; padding: 6px 10px 6px 6px; gap: 8px; transform: none !important; text-align: left !important; flex-direction: row !important; }
+  .syn-row .s-k { font-size: 9px; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .syn-row .s-t { font-size: 13px; overflow-wrap: normal; word-break: normal; hyphens: manual; }
   .syn-row .s-node { flex-basis: 30px; height: 30px; }
   .syn .s-r { display: none; }
   .n-links a { flex-direction: column; align-items: flex-start; gap: 5px; padding: 9px 13px; }
@@ -292,3 +316,4 @@ body.mode-intro .hud-bottom, body.mode-fly .hud-bottom .keys { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+.n-title:focus { outline: none; }

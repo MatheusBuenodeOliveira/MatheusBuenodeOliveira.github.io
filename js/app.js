@@ -62,6 +62,7 @@
     orbR = mobile ? Math.min(DH / 2, D * 0.62) : D / 2;
     root.style.setProperty("--D", D + "px");
     root.style.setProperty("--DH", DH + "px");
+    root.style.setProperty("--orbR", Math.round(orbR) + "px");
 
     // world layout: in close-up, neighbours sit just outside the viewport
     const dx = Math.max(vw / 2 + D / 2 + (mobile ? 40 : 90), D * 1.4);
@@ -154,6 +155,7 @@
       const p = curve([e.a.wx, e.a.wy], [e.b.wx, e.b.wy], e.bend);
       path = e.a === from ? p : [p[6], p[7], p[4], p[5], p[2], p[3], p[0], p[1]];
     } else path = curve([from.wx, from.wy], [to.wx, to.wy], 0);
+    path[0] = cam.x; path[1] = cam.y; // start from wherever a drag left the camera
     const dist = Math.hypot(to.wx - from.wx, to.wy - from.wy);
     const dip = Math.min(0.72, 0.3 + dist / (D * 9));
     setMode("fly"); clearSynapses(); trailPts.length = 0;
@@ -189,7 +191,7 @@
     current = id; m = 0;
     cam.x = N[id].wx; cam.y = N[id].wy; cam.z = 1;
     visited.add(id); saveVisited();
-    renderSoma(); setMode("focus"); renderSynapses(); renderTrail(); drawMini();
+    renderSoma(); setMode("focus"); renderSynapses(); renderTrail(); drawMini(); maybeHint();
     if (push) history.pushState(null, "", "#" + id);
     else if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
     const h = $("#somaInner h2"); h && h.focus({ preventScroll: true });
@@ -582,8 +584,8 @@
   // one neuron as a rotating plexus sphere, with level of detail by size
   function drawNeuron(n, x, y, r, alpha, lit) {
     const g = n.geo, rgb = rgbOf(n.color);
-    const c = Math.cos(tnow * 0.12 + n.phase), s = Math.sin(tnow * 0.12 + n.phase);
-    const tx = 0.25 + Math.sin(tnow * 0.15 + n.phase) * 0.08, c2 = Math.cos(tx), s2 = Math.sin(tx);
+    const c = Math.cos(tnow * 0.12 + n.phase + n.uy), s = Math.sin(tnow * 0.12 + n.phase + n.uy);
+    const tx = 0.25 + Math.sin(tnow * 0.15 + n.phase) * 0.08 + n.ux, c2 = Math.cos(tx), s2 = Math.sin(tx);
     const big = r > 46, A = alpha * (lit ? 1 : 0.7);
     const gs = r * 2.6;
     ctx.globalAlpha = A * (lit ? 0.4 : 0.25);
@@ -679,7 +681,7 @@
       drawStrand(curve(a, b, e.bend), e.offs, e.kind === "link" ? e.b.color : e.a.color, alpha, spread * (e.kind === "link" ? 0.7 : 1));
     }
 
-    if (mode === "focus") conns.forEach((c) => drawStrand(c.p, c.offs, c.color, c.kind === "link" ? 0.75 : 1, orbR * 0.07));
+    if (mode === "focus" && !(drag && drag.kind === "pan" && drag.live)) conns.forEach((c) => drawStrand(c.p, c.offs, c.color, c.kind === "link" ? 0.75 : 1, orbR * 0.07));
 
     pulses = pulses.filter((q) => {
       q.t += q.v * dt;
@@ -734,6 +736,7 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     stepTween(now);
+    spinPhysics(dt, now);
     if (!reduceMotion) {
       clock += dt;
       const every = mode === "focus" ? 0.28 : hoverId ? 0.06 : 0.12;
@@ -741,6 +744,121 @@
     }
     if (perfProbe) { const t0 = performance.now(); draw(dt); perfProbe.push(performance.now() - t0); if (perfProbe.length > 120) perfProbe.shift(); window.__drawMs = perfProbe.reduce((a, b) => a + b, 0) / perfProbe.length; } else draw(dt);
     requestAnimationFrame(frame);
+  }
+
+  // ───────── Gestures: spin the neuron, drag the space to travel ─────────
+  nodes.forEach((n) => { n.uy = 0; n.ux = 0; n.vy = 0; n.vx = 0; n.touched = 0; });
+  const somaEl = $("#soma");
+  let drag = null, lastRx = null, lastRy = null, lastPx = 0, lastPy = 0, swallowClick = false;
+  const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
+  function spinPhysics(dt, now) {
+    for (const n of nodes) {
+      if (drag && drag.kind === "rot" && n.id === current) continue;
+      if (n.vy || n.vx) {
+        n.uy += n.vy * dt; n.ux += n.vx * dt;
+        const f = Math.exp(-dt * 3.5); n.vy *= f; n.vx *= f;
+        if (Math.abs(n.vy) + Math.abs(n.vx) < 0.01) n.vy = n.vx = 0;
+      }
+      if ((n.uy || n.ux) && now - n.touched > 1400) { // settle back so the text faces the reader
+        const f = Math.exp(-dt * 2.2);
+        n.uy = wrapPi(n.uy) * f; n.ux = wrapPi(n.ux) * f;
+        if (Math.abs(n.uy) + Math.abs(n.ux) < 0.002) n.uy = n.ux = 0;
+      }
+    }
+    const n = current && N[current];
+    const ry = n ? n.uy : 0, rx = n ? -n.ux : 0;
+    const px = n && mode === "focus" ? Math.round((n.wx - cam.x) * cam.z) : 0, py = n && mode === "focus" ? Math.round((n.wy - cam.y) * cam.z) : 0;
+    if (px !== lastPx || py !== lastPy) { somaEl.style.setProperty("--px", px + "px"); somaEl.style.setProperty("--py", py + "px"); lastPx = px; lastPy = py; }
+    if (ry !== lastRy || rx !== lastRx) {
+      somaEl.style.setProperty("--ry", ry + "rad"); somaEl.style.setProperty("--rx", rx + "rad");
+      somaEl.classList.toggle("spun", !!(ry || rx));
+      lastRy = ry; lastRx = rx;
+    }
+  }
+
+  // which neighbour lies in the direction of travel?
+  function aimAt(tx, ty) {
+    const n = N[current], L = Math.hypot(tx, ty) || 1;
+    let best = null, bestCos = 0.55;
+    for (const s of synList) {
+      if (s.virtual) continue;
+      const dx = s.node.wx - n.wx, dy = s.node.wy - n.wy, l = Math.hypot(dx, dy) || 1;
+      const cos = (dx * tx + dy * ty) / (l * L);
+      if (cos > bestCos) { bestCos = cos; best = s; }
+    }
+    return best;
+  }
+
+  addEventListener("pointerdown", (e) => {
+    if (mode !== "focus" || e.button > 0 || drag) return;
+    if (e.target.closest(".syn, button, a, input, .hud-top, .hud-bottom, .overview-bar")) return;
+    const onSoma = !!e.target.closest("#soma");
+    drag = { id: e.pointerId, type: e.pointerType, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), kind: onSoma ? "rot" : "pan", live: false, vx: 0, vy: 0 };
+    if (onSoma && e.pointerType === "mouse") e.preventDefault(); // no text selection while spinning
+  });
+
+  addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const now = performance.now(), dx = e.clientX - drag.x, dy = e.clientY - drag.y, dt = Math.max(1, now - drag.t) / 1000;
+    if (!drag.live) {
+      const mx = e.clientX - drag.x0, my = e.clientY - drag.y0;
+      if (Math.hypot(mx, my) < 6) return;
+      // on touch, a vertical drag on the neuron scrolls its text instead
+      if (drag.kind === "rot" && drag.type !== "mouse" && Math.abs(my) > Math.abs(mx)) { drag = null; return; }
+      drag.live = true;
+      body.classList.add(drag.kind === "rot" ? "rotating" : "panning");
+    }
+    if (drag.kind === "rot") {
+      const n = N[current], k = 1 / orbR;
+      n.uy += dx * k; n.ux -= dy * k; n.touched = now;
+      n.vy = (dx * k) / dt; n.vx = (-dy * k) / dt;
+    } else {
+      const ox = e.clientX - drag.x0, oy = e.clientY - drag.y0;
+      cam.x = N[current].wx - ox * 0.9; cam.y = N[current].wy - oy * 0.9;
+      const s = Math.hypot(ox, oy) > 40 ? aimAt(-ox, -oy) : null;
+      synList.forEach((x) => x.el.classList.toggle("aim", x === s));
+      drag.aim = s;
+      drag.vx = dx / dt; drag.vy = dy / dt;
+    }
+    drag.x = e.clientX; drag.y = e.clientY; drag.t = now;
+  });
+
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    const d = drag; drag = null;
+    body.classList.remove("rotating", "panning");
+    if (!d.live) return;
+    swallowClick = true; setTimeout(() => (swallowClick = false), 0);
+    if (d.kind === "rot") {
+      const n = N[current]; n.touched = performance.now();
+      if (performance.now() - d.t > 80) n.vy = n.vx = 0; // released while holding still
+      return;
+    }
+    synList.forEach((x) => x.el.classList.remove("aim"));
+    const ox = d.x - d.x0, oy = d.y - d.y0, flick = Math.hypot(d.vx, d.vy) > 700;
+    const target = d.aim || (flick ? aimAt(-d.vx, -d.vy) : null);
+    const dist = Math.hypot(ox, oy);
+    if (target && (dist > Math.min(vw, vh) * 0.18 || (flick && dist > 90))) { go(target.id); return; }
+    const x0 = cam.x, y0 = cam.y, n = N[current]; // not far enough: spring back
+    animate(320, (k) => { const t = ease(k); cam.x = lerp(x0, n.wx, t); cam.y = lerp(y0, n.wy, t); });
+  }
+  addEventListener("pointerup", endDrag);
+  addEventListener("pointercancel", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (drag.kind === "pan" && drag.live) return endDrag(e);
+    drag = null; body.classList.remove("rotating", "panning");
+  });
+  addEventListener("click", (e) => { if (swallowClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+  // a one-time hint for touch screens, where the key line is hidden
+  function maybeHint() {
+    try { if (!mobile || localStorage.getItem("hinted")) return; localStorage.setItem("hinted", "1"); } catch { return; }
+    const t = document.createElement("div");
+    t.className = "toast"; t.textContent = ui("dragHint");
+    body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add("on"));
+    setTimeout(() => { t.classList.remove("on"); setTimeout(() => t.remove(), 600); }, 5000);
   }
 
   // ───────── Controls ─────────
