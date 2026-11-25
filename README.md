@@ -1,18 +1,18 @@
 # matheusbuenodeoliveira.github.io
 
-My personal site: my career drawn as a neural network.
+My personal site: my career as a neural network you explore one neuron at a time.
 
-- **Input → Training data → Experience → Learned features → Output**: each neuron is a piece of my history (education, roles, skills, contact).
-- Edges are real relationships with weights. Hover a neuron to trace the signal that fed it and what it produced.
-- The timeline is the training run: drag it, or press **Run forward pass** to watch the network learn from 2019 to now.
-- The **Model card** section below is the same data as a plain, readable résumé.
-- English by default, Portuguese with the EN/PT toggle (or `?lang=pt`).
+- The camera stays close on a single neuron, and its content (role, period, impact, stack) lives inside it.
+- Synapses leave the neuron toward where their targets really are. Follow one and the camera travels along that weight.
+- Three themed paths start at the input neuron: **Career**, **Education** and **Skills**. Cross-path synapses carry a reason, for example *PUCRS → Dell Intern: selected for Dell IT Academy*, so you can jump paths at any point.
+- **Full network** (button, minimap or `N`) zooms out to the whole graph. Click any neuron to dive into it.
+- Every neuron has its own URL (`#telus`, `#network`). English by default, Portuguese with the EN/PT toggle (or `?lang=pt`).
 
 Built with plain HTML, CSS and JavaScript (canvas). No framework, no build step.
 
 ## Edit content
 
-Everything lives in [`js/data.js`](js/data.js): neurons, edges and UI strings, each with `en` and `pt`.
+Everything lives in [`js/data.js`](js/data.js): tracks, neurons, cross-path links and UI strings, each with `en` and `pt`.
 
 ## Run locally
 
